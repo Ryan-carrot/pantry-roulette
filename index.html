@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantry Roulette</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+    <body>
+        <div class="container">
+
+            <header class="hero">
+                <h1>🎰 Pantry Roulette</h1>
+                <p class="subtitle">Spin the wheel. Feed yourself.</p>
+            </header>
+
+            <main class="card">
+                <div class="input-group">
+                <label for="ingredients">What's in your pantry?</label>
+                <input
+                    type="text"
+                    id="ingredients"
+                    placeholder="e.g. eggs, butter, pasta"
+                    autocomplete="off"
+                />
+                </div>
+
+                <div class="input-group">
+                <label for="vibe">What's the vibe?</label>
+                <select id="vibe">
+                    <option value="lazy">😴 Lazy</option>
+                    <option value="impressive">✨ Impress Someone</option>
+                    <option value="hearty">🍖 Hearty</option>
+                    <option value="fun">🎉 Fun</option>
+                    <option value="healthy">🥗 Healthy</option>
+                    <option value="comfort">🍲 Comfort</option>
+                    <option value="fancy">🍽️ Fancy</option>
+                    <option value="elegant">👗 Elegant</option>
+                    <option value="classic">🍝 Classic</option>
+                    <option value="simple">🍳 Simple</option>
+                </select>
+                </div>
+
+                <button id="spin-btn">
+                <span id="btn-text">Spin the Pantry 🎰</span>
+                </button>
+            </main>
+
+            <div id="result" class="result-card hidden"></div>
+        </div>
+
+        <script src="recipes.js"></script>
+        <script src="app.js"></script>
+    </body>
+</html>

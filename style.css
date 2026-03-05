@@ -1,0 +1,199 @@
+/* ── Reset & Base ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: #1a1a2e;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px;
+}
+
+/* ── Layout ── */
+.container {
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Hero ── */
+.hero {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.hero h1 {
+  font-family: 'Fredoka One', cursive;
+  font-size: 3rem;
+  color: #ff6b35;
+  letter-spacing: 1px;
+}
+
+.hero .subtitle {
+  color: #a0a0c0;
+  font-size: 1.1rem;
+  margin-top: 6px;
+}
+
+/* ── Card ── */
+.card {
+  background: #16213e;
+  border-radius: 20px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+/* ── Input Group ── */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-weight: 700;
+  color: #e0e0f0;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+input, select {
+  padding: 14px 16px;
+  font-size: 1rem;
+  font-family: 'Nunito', sans-serif;
+  background: #0f3460;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  color: #ffffff;
+  transition: border-color 0.2s ease;
+  outline: none;
+}
+
+input::placeholder {
+  color: #5a6a8a;
+}
+
+input:focus, select:focus {
+  border-color: #ff6b35;
+}
+
+select option {
+  background: #0f3460;
+}
+
+/* ── Button ── */
+button {
+  padding: 16px;
+  font-size: 1.1rem;
+  font-family: 'Fredoka One', cursive;
+  font-weight: 400;
+  letter-spacing: 1px;
+  background: #ff6b35;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
+  margin-top: 4px;
+}
+
+button:hover {
+  background: #e55a25;
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0px);
+}
+
+button.spinning {
+  animation: pulse 0.6s ease infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  from { transform: scale(1); background: #ff6b35; }
+  to   { transform: scale(1.03); background: #e55a25; }
+}
+
+/* ── Result Card ── */
+.result-card {
+  background: #16213e;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  animation: slideUp 0.4s ease;
+}
+
+.result-card.hidden {
+  display: none;
+}
+
+.result-card .result-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #ff6b35;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.result-card h2 {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.result-card .description {
+  color: #a0a0c0;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.result-card .meta {
+  display: flex;
+  gap: 16px;
+}
+
+.result-card .meta span {
+  background: #0f3460;
+  color: #e0e0f0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.no-match {
+  color: #a0a0c0;
+  font-size: 1rem;
+  text-align: center;
+  padding: 10px 0;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.result-img {
+  width: 100%;
+  border-radius: 12px;
+  margin: 12px 0;
+  object-fit: cover;
+  max-height: 220px;
+}
