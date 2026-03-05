@@ -8,12 +8,10 @@ Pantry Roulette isn't your typical recipe app — it's a constraint-based meal s
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
 
-
 ## 🌐 Live Preview
 
 Check it out on GitHub Pages:  
 👉 **[https://ryan-carrot.github.io/pantry-roulette/](https://ryan-carrot.github.io/pantry-roulette/)**
-
 
 ## 📖 Project Overview
 
@@ -26,7 +24,6 @@ The app scores recipes by how well they match your available ingredients and sel
 
 It pulls from both a **local recipe database** and the **[TheMealDB API](https://www.themealdb.com/)** to find the best match for you.
 
-
 ## 🚀 Getting Started
 
 1. **Clone the repository**
@@ -38,8 +35,7 @@ It pulls from both a **local recipe database** and the **[TheMealDB API](https:/
    cd pantry-roulette
    ```
 3. **Launch it** - Open index.html directly in your browser — no build tools or dependencies required.
-   
-_This is a fully static front-end project. No server, no installs, no setup._
+   _This is a fully static front-end project. No server, no installs, no setup._
 
 ## 🧩 What's in the Project
 
@@ -72,6 +68,11 @@ pantry-roulette/
 
 ## 🔮 Next Steps / Enhancements
 
+- **Save Feature** — Let users save favorite recipes to local storage so they can revisit them later without re-spinning.
+- **Improved Match Logic** — Incorporate fuzzy matching and synonyms (e.g. "cheddar" matching "cheese") to improve ingredient scoring accuracy.
+- **Expanded Meal Database** — Grow the local recipes.js collection with more recipes across all vibe categories for better offline coverage.
+- **UI Improvements** — Add ingredient tag chips, recipe cards with flip animations, and a history of past spins.
+- **Accessibility Improvements** — Add ARIA labels, keyboard navigation support, screen reader–friendly result announcements, and improved color contrast.
 - **Save Feature** — Let users save favorite recipes to local storage so they can revisit them later without re-spinning.
 - **Improved Match Logic** — Incorporate fuzzy matching and synonyms (e.g. "cheddar" matching "cheese") to improve ingredient scoring accuracy.
 - **Expanded Meal Database** — Grow the local recipes.js collection with more recipes across all vibe categories for better offline coverage.
