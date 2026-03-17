@@ -60,8 +60,80 @@ function filterRecipes(userIngredients, selectedVibe) {
     return scored;
 }
 
+// Focused functions - separation of concerns
+// Reads from localStorage and parses the JSON string back into a JS array. If nothing is saved yet, it returns an empty array instead of crashing
+function getFavorites() {
+    const stored = localStorage.getItem("pantryRouletteFavorites");
+    return stored ? JSON.parse(stored) : [];
+}
+
+// Gets the current list, checks if the recipe is already saved to prevent dupes, adds it, and writes it back. Returns true or false so the UI can respond accordingly
+function saveFavorite(recipe) {
+    const favorites = getFavorites();
+    const alreadySaved = favorites.some(fav => fav.name === recipe.name);
+    if (alreadySaved) return false; // Prevent duplicates
+    favorites.push(recipe);
+    localStorage.setItem("pantryRouletteFavorites", JSON.stringify(favorites));
+    return true;
+}
+
+// Filters out the recipe by name and overwrites localStorage with the updated list
+function removeFavorite(recipeName) {
+    const favorites = getFavorites();
+    const updated = favorites.filter(fav => fav.name !== recipeName);
+    localStorage.setItem("pantryRouletteFavorites", JSON.stringify(updated));
+}
+
+
 const btn = document.getElementById("spin-btn");
 const resultDiv = document.getElementById("result");
+
+// Render favorites - lives OUTSIDE the click handler
+function renderFavorites() {
+  const favorites = getFavorites();
+  const list = document.getElementById("favorites-list");
+  const empty = document.getElementById("favorites-empty");
+
+  list.innerHTML = "";
+
+  if (favorites.length === 0) {
+    empty.classList.remove("hidden");
+    return;
+  }
+
+  empty.classList.add("hidden");
+
+  favorites.forEach(recipe => {
+    const card = document.createElement("div");
+    card.classList.add("fav-card");
+    card.innerHTML = `
+      ${recipe.image ? `<img src="${recipe.image}" alt="${recipe.name}" class="fav-img" />` : ""}
+      <div class="fav-info">
+        <h3>${recipe.name}</h3>
+        <p>${recipe.description}</p>
+        <div class="meta">
+          <span>⏱ ${recipe.time} mins</span>
+        </div>
+      </div>
+      <button class="remove-btn" data-name="${recipe.name}">✕</button>
+    `;
+
+    card.querySelector(".remove-btn").addEventListener("click", (e) => {
+      const name = e.target.getAttribute("data-name");
+      removeFavorite(name);
+      renderFavorites();
+
+      const saveBtn = document.getElementById("save-btn");
+      if (saveBtn && saveBtn.dataset.recipeName === name) {
+        saveBtn.textContent = "Save to Favorites ❤️";
+        saveBtn.disabled = false;
+        saveBtn.classList.remove("saved");
+      }
+    });
+
+    list.appendChild(card);
+  });
+}
 
 btn.addEventListener("click", async () => {
   const input = document.getElementById("ingredients").value.trim();
@@ -74,7 +146,6 @@ btn.addEventListener("click", async () => {
     return;
   }
 
-  // Animate the button
   btn.classList.add("spinning");
   btnText.textContent = "Spinning... 🎰";
   resultDiv.classList.add("hidden");
@@ -83,7 +154,6 @@ btn.addEventListener("click", async () => {
     .split(",")
     .map(item => item.trim().toLowerCase());
 
-  // Use the first ingredient to search the API
   const primaryIngredient = userIngredients[0];
   const rawMeals = await fetchRecipesByIngredient(primaryIngredient);
 
@@ -96,13 +166,11 @@ btn.addEventListener("click", async () => {
     return;
   }
 
-  // Fetch full details for up to 5 meals
   const detailPromises = rawMeals.slice(0, 5).map(meal =>
     fetchRecipeDetails(meal.idMeal)
   );
   const detailedMeals = await Promise.all(detailPromises);
 
-  // Normalize and score them
   const normalized = detailedMeals
     .filter(Boolean)
     .map(meal => normalizeMeal(meal));
@@ -124,6 +192,9 @@ btn.addEventListener("click", async () => {
 
   const matchPercent = Math.round((pick.score || 0) * 100);
 
+  // Check if already saved BEFORE building the HTML
+  const alreadySaved = getFavorites().some(fav => fav.name === pick.name);
+
   resultDiv.innerHTML = `
     <p class="result-label">Tonight you're making...</p>
     <h2>${pick.name}</h2>
@@ -134,7 +205,30 @@ btn.addEventListener("click", async () => {
       <span>🧄 ${pick.matchedCount}/${pick.ingredients.length} ingredients</span>
       <span>✅ ${matchPercent}% match</span>
     </div>
+    <button 
+      id="save-btn" 
+      class="save-btn ${alreadySaved ? "saved" : ""}" 
+      data-recipe-name="${pick.name}"
+      ${alreadySaved ? "disabled" : ""}
+    >
+      ${alreadySaved ? "Already Saved ✅" : "Save to Favorites ❤️"}
+    </button>
   `;
 
   resultDiv.classList.remove("hidden");
+
+  // Only attach the click listener if not already saved
+  if (!alreadySaved) {
+    document.getElementById("save-btn").addEventListener("click", () => {
+      saveFavorite(pick);
+      const saveBtn = document.getElementById("save-btn");
+      saveBtn.textContent = "Saved! ✅";
+      saveBtn.disabled = true;
+      saveBtn.classList.add("saved");
+      renderFavorites();
+    });
+  }
 });
+
+// Render favorites on page load
+renderFavorites();
