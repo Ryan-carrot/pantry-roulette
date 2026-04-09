@@ -84,6 +84,26 @@ function removeFavorite(recipeName) {
     localStorage.setItem("pantryRouletteFavorites", JSON.stringify(updated));
 }
 
+// Filter will persist across searches - we'll store previously picked recipe names in localStorage so they survive page refreshes 
+// Each time a recipe is picked, it gets added to "recently seen" list
+// When scoring, recipces on that list get a score pneality so fresher results are prioritized
+// List caps at 20 recipes to prevent it from growing indefinitely
+function getSeenRecipes() {
+    const stored = localStorage.getItem("pantryRouletteSeenRecipes");
+    return stored ? JSON.parse(stored) : [];
+}
+
+function addSeenRecipe(recipeName) {
+    const seen = getSeenRecipes();
+    if (seen.includes(recipeName)) return; // Prevent duplicates
+    seen.push(recipeName);
+    if (seen.length > 20) seen.shift(); // Keep only the last 20 seen recipes
+    localStorage.setItem("pantryRouletteSeenRecipes", JSON.stringify(seen));
+}
+
+function clearSeenRecipes() {
+    localStorage.removeItem("pantryRouletteSeenRecipes");
+}
 
 const btn = document.getElementById("spin-btn");
 const resultDiv = document.getElementById("result");
@@ -166,7 +186,7 @@ btn.addEventListener("click", async () => {
     return;
   }
 
-  const detailPromises = rawMeals.slice(0, 5).map(meal =>
+  const detailPromises = rawMeals.slice(0, 30).map(meal =>
     fetchRecipeDetails(meal.idMeal)
   );
   const detailedMeals = await Promise.all(detailPromises);
@@ -175,13 +195,28 @@ btn.addEventListener("click", async () => {
     .filter(Boolean)
     .map(meal => normalizeMeal(meal));
 
+  const seen = getSeenRecipes();
+
   const scored = normalized
     .map(recipe => {
       const matched = recipe.ingredients.filter(ingredient =>
         userIngredients.includes(ingredient)
       );
-      const score = matched.length / recipe.ingredients.length;
-      return { ...recipe, score, matchedCount: matched.length };
+      const ingredientScore = matched.length / recipe.ingredients.length;
+      const vibeScore = scoreRecipeForVibe(recipe, selectedVibe);
+      let combinedScore = (ingredientScore * 0.5) + (vibeScore * 0.5);
+
+      // Apply penalty for recently seen recipes
+      if (seen.includes(recipe.name)) {
+        combinedScore *= 0.3;
+      }
+
+      return { 
+        ...recipe, 
+        score: combinedScore,
+        vibeScore,
+        matchedCount: matched.length 
+      };
     })
     .filter(recipe => recipe.score > 0)
     .sort((a, b) => b.score - a.score);
@@ -190,10 +225,12 @@ btn.addEventListener("click", async () => {
     ? scored[0]
     : normalized[Math.floor(Math.random() * normalized.length)];
 
-  const matchPercent = Math.round((pick.score || 0) * 100);
+  addSeenRecipe(pick.name);
 
   // Check if already saved BEFORE building the HTML
   const alreadySaved = getFavorites().some(fav => fav.name === pick.name);
+  const matchPercent = Math.round((pick.score || 0) * 100);
+  const vibePercent = Math.round((pick.vibeScore || 0) * 100);
 
   resultDiv.innerHTML = `
     <p class="result-label">Tonight you're making...</p>
@@ -204,6 +241,7 @@ btn.addEventListener("click", async () => {
       <span>⏱ ${pick.time} mins</span>
       <span>🧄 ${pick.matchedCount}/${pick.ingredients.length} ingredients</span>
       <span>✅ ${matchPercent}% match</span>
+      <span>🎭 ${vibePercent}% vibe</span>
     </div>
     <button 
       id="save-btn" 
@@ -232,3 +270,12 @@ btn.addEventListener("click", async () => {
 
 // Render favorites on page load
 renderFavorites();
+
+document.getElementById("reset-seen-btn").addEventListener("click", () => {
+  clearSeenRecipes();
+  const resetBtn = document.getElementById("reset-seen-btn");
+  resetBtn.textContent = "✅ Reset!";
+  setTimeout(() => {
+    resetBtn.textContent = "🔄 Reset Suggestions";
+  }, 2000);
+});

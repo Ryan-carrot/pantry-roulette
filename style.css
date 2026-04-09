@@ -315,3 +315,24 @@ button.spinning {
   background: transparent;
   transform: none;
 }
+
+.reset-btn {
+  background: transparent;
+  border: 2px solid #5a6a8a;
+  color: #5a6a8a;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.reset-btn:hover {
+  border-color: #a0a0c0;
+  color: #a0a0c0;
+  transform: translateY(-2px);
+  background: transparent;
+}
