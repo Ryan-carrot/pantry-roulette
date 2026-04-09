@@ -46,6 +46,12 @@ It pulls from both a **local recipe database** and the **[TheMealDB API](https:/
 - **Local Recipe Database** — A curated set of recipes in recipes.js with hand-picked vibes and descriptions.
 - **Animated Spin** — A pulsing button animation while results are loading.
 - **Dark-Themed UI** — A clean, modern dark interface using Fredoka One and Nunito fonts.
+- **Save to favorites** with localStorage persistence
+- **Remove from favorites** button
+- **Save button** reflects correct state on render
+- **Vibe inference engine** with keyword and structural scoring
+- **Diversity filter** with seen recipe tracking
+- **Reset suggestions** feature
 
 ## 📁 Project Structure
 
