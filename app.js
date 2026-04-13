@@ -135,7 +135,11 @@ function renderFavorites() {
           <span>⏱ ${recipe.time} mins</span>
         </div>
       </div>
-      <button class="remove-btn" data-name="${recipe.name}">✕</button>
+      <button class="remove-btn" data-name="${recipe.name}" aria-label="Remove ${recipe.name} from favorites">
+        <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+      </button>
     `;
 
     card.querySelector(".remove-btn").addEventListener("click", (e) => {
@@ -238,22 +242,28 @@ btn.addEventListener("click", async () => {
     ${pick.image ? `<img src="${pick.image}" alt="${pick.name}" class="result-img" />` : ""}
     <p class="description">${pick.description}</p>
     <div class="meta">
-      <span>⏱ ${pick.time} mins</span>
-      <span>🧄 ${pick.matchedCount}/${pick.ingredients.length} ingredients</span>
-      <span>✅ ${matchPercent}% match</span>
-      <span>🎭 ${vibePercent}% vibe</span>
+      <span class="meta-time">${pick.time} mins</span>
+      <span class="meta-ingredients">${pick.matchedCount}/${pick.ingredients.length} ingredients</span>
+      <span class="meta-match">${matchPercent}% match</span>
+      <span class="meta-vibe">${vibePercent}% vibe</span>
     </div>
     <button 
       id="save-btn" 
       class="save-btn ${alreadySaved ? "saved" : ""}" 
       data-recipe-name="${pick.name}"
       ${alreadySaved ? "disabled" : ""}
+      aria-label="${alreadySaved ? `${pick.name} is already saved to favorites` : `Save ${pick.name} to favorites`}"
     >
-      ${alreadySaved ? "Already Saved ✅" : "Save to Favorites ❤️"}
+      <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${alreadySaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+      </svg>
+      ${alreadySaved ? "Already Saved" : "Save to Favorites"}
     </button>
   `;
 
   resultDiv.classList.remove("hidden");
+  resultDiv.setAttribute("tabindex", "-1");
+  resultDiv.focus();
 
   // Only attach the click listener if not already saved
   if (!alreadySaved) {

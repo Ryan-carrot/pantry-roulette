@@ -61,6 +61,7 @@ pantry-roulette/
 ├── style.css       # All styling — dark theme, animations, responsive layout
 ├── app.js          # Core logic — API calls, scoring, DOM updates
 ├── recipes.js      # Local recipe database with vibes and ingredients
+├── vibes.js        # Vibe profile and scoring system
 └── README.md       # You are here
 ```
 
@@ -74,13 +75,8 @@ pantry-roulette/
 
 ## 🔮 Next Steps / Enhancements
 
-- **Save Feature** — Let users save favorite recipes to local storage so they can revisit them later without re-spinning.
 - **Improved Match Logic** — Incorporate fuzzy matching and synonyms (e.g. "cheddar" matching "cheese") to improve ingredient scoring accuracy.
-- **Expanded Meal Database** — Grow the local recipes.js collection with more recipes across all vibe categories for better offline coverage.
-- **UI Improvements** — Add ingredient tag chips, recipe cards with flip animations, and a history of past spins.
-- **Accessibility Improvements** — Add ARIA labels, keyboard navigation support, screen reader–friendly result announcements, and improved color contrast.
-- **Save Feature** — Let users save favorite recipes to local storage so they can revisit them later without re-spinning.
-- **Improved Match Logic** — Incorporate fuzzy matching and synonyms (e.g. "cheddar" matching "cheese") to improve ingredient scoring accuracy.
+- **Multiple Ingredient Support** — Incorporate support for multi-ingredient search
 - **Expanded Meal Database** — Grow the local recipes.js collection with more recipes across all vibe categories for better offline coverage.
 - **UI Improvements** — Add ingredient tag chips, recipe cards with flip animations, and a history of past spins.
 - **Accessibility Improvements** — Add ARIA labels, keyboard navigation support, screen reader–friendly result announcements, and improved color contrast.

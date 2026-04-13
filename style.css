@@ -38,7 +38,7 @@ body {
 }
 
 .hero .subtitle {
-  color: #a0a0c0;
+  color: #b8b8d0;
   font-size: 1.1rem;
   margin-top: 6px;
 }
@@ -87,6 +87,12 @@ input::placeholder {
 
 input:focus, select:focus {
   border-color: #ff6b35;
+}
+
+.input-hint {
+  font-size: 0.8rem;
+  color: #7a8aa0;
+  margin-top: 2px;
 }
 
 select option {
@@ -158,7 +164,7 @@ button.spinning {
 }
 
 .result-card .description {
-  color: #a0a0c0;
+  color: #b8b8d0;
   font-size: 1rem;
   line-height: 1.6;
   margin-bottom: 16px;
@@ -256,7 +262,7 @@ button.spinning {
 }
 
 .fav-info p {
-  color: #a0a0c0;
+  color: #b8b8d0;
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -335,4 +341,57 @@ button.spinning {
   color: #a0a0c0;
   transform: translateY(-2px);
   background: transparent;
+}
+
+/* ── Skip Link ── */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: #ff6b35;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 0 0 8px 0;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  text-decoration: none;
+  z-index: 999;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ── Meta Icons ── */
+.meta-time::before { 
+  content: "⏱ "; 
+}
+
+.meta-ingredients::before {
+   content: "🧄 "; 
+}
+
+.meta-match::before {
+   content: "✅ "; 
+}
+
+.meta-vibe::before {
+   content: "🎭 ";
+}
+
+/* SVG icon alignment */
+h1 svg, h2 svg {
+  vertical-align: middle;
+  margin-right: 8px;
+  color: #ff6b35;
+}
+
+button svg {
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.save-btn svg {
+  color: currentColor;
 }
