@@ -47,12 +47,12 @@ function normalizeMeal(meal) {
 function filterRecipes(userIngredients, selectedVibe) {
     const scored = recipes
         .filter(recipe => recipe.vibe === selectedVibe)
-        .map(recipe => { // Transforms each recipe into the same recipce object but with score and matchedCount properties added
+        .map(recipe => { // Transforms each recipe into the same recipe object but with score and matchedCount properties added
             const matched = recipe.ingredients.filter(ingredient =>
                 userIngredients.includes(ingredient.toLowerCase())
             );
             const score = matched.length / recipe.ingredients.length; // Calculate a score between 0 and 1 based on how many ingredients match
-            return { ...recipe, score, matchedCount: matched.length }; // Spread operator - copies existing recipe properties into a new obect, doesn't mutate OG data
+            return { ...recipe, score, matchedCount: matched.length }; // Spread operator - copies existing recipe properties into a new object, doesn't mutate OG data
         })
         .filter(recipe => recipe.score > 0) // Only consider recipes with at least one match
         .sort((a, b) => b.score - a.score); // Sorts highest score to the top
