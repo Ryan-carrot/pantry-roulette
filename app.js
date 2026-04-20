@@ -1,14 +1,35 @@
 async function fetchRecipesByIngredient(ingredient) {
-    try {
-        const response = await fetch(
-            `https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredient}`
-        );
-        const data = await response.json();
-        return data.meals || [];
-      } catch (error) {
-        console.error("Failed to fetch recipes:", error);
-        return [];
-    }
+  try {
+    const response = await fetch(
+      `https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredient}`
+    );
+    const data = await response.json();
+    return data.meals || [];
+  } catch (error) {
+    console.error(`Failed to fetch recipes for ${ingredient}:`, error);
+    return [];
+  }
+}
+
+async function fetchRecipesByIngredients(ingredients) {
+  // Query MealDB for each ingredient simultaneously
+  const queries = ingredients.map(ingredient =>
+    fetchRecipesByIngredient(ingredient)
+  );
+  const results = await Promise.all(queries);
+
+  // Cap each ingredient's results at 10 then merge
+  const merged = results.flatMap(meals => meals.slice(0, 10));
+
+  // Deduplicate by idMeal
+  const seen = new Set();
+  const deduplicated = merged.filter(meal => {
+    if (seen.has(meal.idMeal)) return false;
+    seen.add(meal.idMeal);
+    return true;
+  });
+
+  return deduplicated;
 }
 
 async function fetchRecipeDetails(id) {
@@ -165,6 +186,7 @@ function renderFavorites() {
   });
 }
 
+// Click handler - main logic lives here
 btn.addEventListener("click", async () => {
   const input = document.getElementById("ingredients").value.trim();
   const selectedVibe = document.getElementById("vibe").value;
@@ -184,14 +206,15 @@ btn.addEventListener("click", async () => {
     .split(",")
     .map(item => item.trim().toLowerCase());
 
-  const primaryIngredient = userIngredients[0];
-  const rawMeals = await fetchRecipesByIngredient(primaryIngredient);
+  // Query API for all ingredients and merge results
+  const rawMeals = await fetchRecipesByIngredients(userIngredients);
+  console.log("Raw meals pool:", rawMeals); // temporary debug line
 
   btn.classList.remove("spinning");
   btnText.textContent = "Spin the Pantry 🎰";
 
   if (!rawMeals || rawMeals.length === 0) {
-    resultDiv.innerHTML = `<p class="no-match">😬 Nothing found for "${primaryIngredient}". Try a different ingredient!</p>`;
+    resultDiv.innerHTML = `<p class="no-match">😬 Nothing found for those ingredients. Try something different!</p>`;
     resultDiv.classList.remove("hidden");
     return;
   }
