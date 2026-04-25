@@ -46,23 +46,39 @@ async function fetchRecipeDetails(id) {
 }
 
 function normalizeMeal(meal) {
-    const ingredients = [];
-    for (let i = 1; i <= 20; i++) {
-        const ingredient = meal[`strIngredient${i}`];
-        if (ingredient && ingredient.trim() !== "") {
-            ingredients.push( ingredient.toLowerCase().trim());
-        }
+  const ingredients = [];
+  const measurementsList = [];
+
+  for (let i = 1; i <= 20; i++) {
+    const ingredient = meal[`strIngredient${i}`];
+    const measure = meal[`strMeasure${i}`];
+    if (ingredient && ingredient.trim() !== "") {
+      ingredients.push(ingredient.toLowerCase().trim());
+      measurementsList.push(measure ? measure.trim() : "");
     }
-    return {
-        name: meal.strMeal,
-        ingredients,
-        description: meal.strInstructions
-            ? meal.strInstructions.substring(0, 120) + "..."
-            : "A delicious meal worth trying.",
-        image: meal.strMealThumb,
-        time: 30,
-        vibe: "any"
-    };
+  }
+
+  // Split instructions into steps by newline, filter empty lines
+  const rawInstructions = meal.strInstructions || "";
+  const steps = rawInstructions
+    .split(/\r?\n/)
+    .map(step => step.trim())
+    .filter(step => step.length > 0);
+
+  return {
+    name: meal.strMeal,
+    ingredients,
+    measurements: measurementsList,
+    steps,
+    description: steps[0]
+      ? steps[0].substring(0, 120) + "..."
+      : "A delicious meal worth trying.",
+    image: meal.strMealThumb,
+    time: 30,
+    vibe: "any",
+    source: meal.strSource || null,
+    category: meal.strCategory || null
+  };
 }
 
 function filterRecipes(userIngredients, selectedVibe) {
@@ -129,6 +145,130 @@ function clearSeenRecipes() {
 const btn = document.getElementById("spin-btn");
 const resultDiv = document.getElementById("result");
 
+function openRecipeModal(recipe) {
+  const modal = document.getElementById("recipe-modal");
+  const modalImage = document.getElementById("modal-image");
+  const modalCategory = document.getElementById("modal-category");
+  const modalTitle = document.getElementById("modal-title");
+  const modalIngredients = document.getElementById("modal-ingredients");
+  const modalSteps = document.getElementById("modal-steps");
+  const modalMeta = document.querySelector(".modal-meta");
+
+  // Populate image
+  if (recipe.image) {
+    modalImage.src = recipe.image;
+    modalImage.alt = recipe.name;
+    modalImage.classList.remove("hidden");
+  } else {
+    modalImage.classList.add("hidden");
+  }
+
+  // Populate header
+  modalCategory.textContent = recipe.category || "";
+  modalTitle.textContent = recipe.name;
+
+  // Populate meta
+  modalMeta.innerHTML = `<span class="meta-time">${recipe.time} mins</span>`;
+
+  // Populate ingredients with measurements
+  modalIngredients.innerHTML = "";
+  recipe.ingredients.forEach((ingredient, index) => {
+    const measure = recipe.measurements && recipe.measurements[index]
+      ? recipe.measurements[index]
+      : "";
+    const li = document.createElement("li");
+    li.textContent = measure ? `${measure} ${ingredient}` : ingredient;
+    modalIngredients.appendChild(li);
+  });
+
+  // Populate steps
+  modalSteps.innerHTML = "";
+  if (recipe.steps && recipe.steps.length > 0) {
+    recipe.steps.forEach(step => {
+      const li = document.createElement("li");
+      li.textContent = step;
+      modalSteps.appendChild(li);
+    });
+  } else {
+    const li = document.createElement("li");
+    li.textContent = recipe.description || "No instructions available.";
+    modalSteps.appendChild(li);
+  }
+
+  // Show modal
+  modal.classList.remove("hidden");
+  document.body.classList.add("modal-open");
+
+  // Move focus to close button
+  document.getElementById("modal-close-btn").focus();
+
+  // Trap focus inside modal
+  trapFocus(modal);
+}
+
+function closeRecipeModal() {
+  const modal = document.getElementById("recipe-modal");
+  modal.classList.add("hidden");
+  document.body.classList.remove("modal-open");
+  removeFocusTrap();
+}
+
+// Focus trapping
+let focusTrapHandler = null;
+
+function trapFocus(element) {
+  const focusable = element.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  );
+  const firstFocusable = focusable[0];
+  const lastFocusable = focusable[focusable.length - 1];
+
+  focusTrapHandler = function(e) {
+    if (e.key !== "Tab") return;
+    if (e.shiftKey) {
+      if (document.activeElement === firstFocusable) {
+        e.preventDefault();
+        lastFocusable.focus();
+      }
+    } else {
+      if (document.activeElement === lastFocusable) {
+        e.preventDefault();
+        firstFocusable.focus();
+      }
+    }
+  };
+
+  element.addEventListener("keydown", focusTrapHandler);
+}
+
+function removeFocusTrap() {
+  const modal = document.getElementById("recipe-modal");
+  if (focusTrapHandler) {
+    modal.removeEventListener("keydown", focusTrapHandler);
+    focusTrapHandler = null;
+  }
+}
+
+// Close button
+document.getElementById("modal-close-btn").addEventListener("click", closeRecipeModal);
+
+// Click outside modal card
+document.getElementById("recipe-modal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("recipe-modal")) {
+    closeRecipeModal();
+  }
+});
+
+// Escape key
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const modal = document.getElementById("recipe-modal");
+    if (!modal.classList.contains("hidden")) {
+      closeRecipeModal();
+    }
+  }
+});
+
 // Render favorites - lives OUTSIDE the click handler
 function renderFavorites() {
   const favorites = getFavorites();
@@ -153,15 +293,17 @@ function renderFavorites() {
       <div class="fav-info">
         <h3>${recipe.name}</h3>
         <p>${recipe.description}</p>
-        <div class="meta">
-          <span>⏱ ${recipe.time} mins</span>
+        <div class="fav-actions">
+          <button class="view-recipe-btn fav-view-btn" aria-label="View full recipe for ${recipe.name}">
+            View Full Recipe
+          </button>
+          <button class="remove-btn" data-name="${recipe.name}" aria-label="Remove ${recipe.name} from favorites">
+            <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
+          </button>
         </div>
       </div>
-      <button class="remove-btn" data-name="${recipe.name}" aria-label="Remove ${recipe.name} from favorites">
-        <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-        </svg>
-      </button>
     `;
 
     card.querySelector(".remove-btn").addEventListener("click", (e) => {
@@ -180,6 +322,10 @@ function renderFavorites() {
         saveBtn.disabled = false;
         saveBtn.classList.remove("saved");
       }
+    });
+
+    card.querySelector(".fav-view-btn").addEventListener("click", () => {
+      openRecipeModal(recipe);
     });
 
     list.appendChild(card);
@@ -288,6 +434,13 @@ btn.addEventListener("click", async () => {
       </svg>
       ${alreadySaved ? "Already Saved" : "Save to Favorites"}
     </button>
+    <button 
+      id="view-recipe-btn" 
+      class="view-recipe-btn"
+      aria-label="View full recipe for ${pick.name}"
+    >
+      View Full Recipe
+    </button>
   `;
 
   resultDiv.classList.remove("hidden");
@@ -305,6 +458,10 @@ btn.addEventListener("click", async () => {
       renderFavorites();
     });
   }
+
+  document.getElementById("view-recipe-btn").addEventListener("click", () => {
+      openRecipeModal(pick);
+  });
 });
 
 // Render favorites on page load

@@ -84,6 +84,35 @@
                 <div id="favorites-list" class="favorites-list"></div>
                 <p id="favorites-empty" class="no-match hidden">No favorites saved yet. Spin to find something you love!</p>
             </section>
+            <div id="recipe-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-body">
+                <div class="modal-card" id="modal-card">
+                    <div id="modal-body">
+                        <div class="modal-image-wrap">
+                            <img id="modal-image" src="" alt="" class="modal-img hidden" />
+                            <button class="modal-close-btn" id="modal-close-btn" aria-label="Close recipe modal">
+                                <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="modal-content">
+                            <p id="modal-category" class="modal-category"></p>
+                            <h2 id="modal-title" class="modal-title"></h2>
+                            <div class="modal-meta">
+                                <span class="meta-time">30 mins</span>
+                            </div>
+                            <div class="modal-section">
+                                <h3>Ingredients</h3>
+                                <ul id="modal-ingredients" class="modal-ingredients-list"></ul>
+                            </div>
+                            <div class="modal-section">
+                                <h3>Instructions</h3>
+                                <ol id="modal-steps" class="modal-steps-list"></ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <script src="vibes.js"></script>
         <script src="recipes.js"></script>
