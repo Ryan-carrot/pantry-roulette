@@ -1,14 +1,13 @@
 # 🎰 Pantry Roulette
 
 **"What Should I Cook?" Randomizer with a Twist**
+**Pantry Roulette** isn't your typical recipe app — it's a constraint-based meal suggester. Tell it what's in your fridge, pick a vibe, and let it spin up something you can actually make tonight.
 
 ## Problem Statement
 Most meal planning tools are optimized for discovery, not execution. They rely on idealized ingredient lists rather than real-world constraints, creating a mismatch between user intent and practical outcomes.
 
 ## Solution
 Pantry Roulette approaches meal generation as a constraint satisfaction problem, using available ingredients and user-defined preferences (“vibes”) as inputs to produce feasible, real-world meal suggestions. This reduces decision complexity while improving usability and alignment with user context.
-
-**Pantry Roulette** isn't your typical recipe app — it's a constraint-based meal suggester. Tell it what's in your fridge, pick a vibe, and let it spin up something you can actually make tonight.
 
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
