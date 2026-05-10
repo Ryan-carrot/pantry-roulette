@@ -626,6 +626,29 @@ button.spinning {
   padding: 8px 14px;
 }
 
+/* ── Footer ── */
+.site-footer {
+  text-align: center;
+  padding: 24px 20px;
+  margin-top: 8px;
+  border-top: 1px solid #1e2d4a;
+}
+
+.site-footer p {
+  color: #b8b8d0;
+  font-size: 0.9rem;
+}
+
+.site-footer a {
+  color: #ff6b35;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.site-footer a:hover {
+  color: #ffffff;
+}
+
 /* ── Body scroll lock ── */
 body.modal-open {
   overflow: hidden;
