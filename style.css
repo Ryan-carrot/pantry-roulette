@@ -649,6 +649,13 @@ button.spinning {
   color: #ffffff;
 }
 
+.footer-badges {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
 /* ── Body scroll lock ── */
 body.modal-open {
   overflow: hidden;
