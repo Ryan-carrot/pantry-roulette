@@ -1,0 +1,12 @@
+{
+  "name": "pantry-roulette",
+  "version": "1.0.0",
+  "description": "A constraint-based recipe finder — tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight.",
+  "homepage": "https://pantryroulette.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ryan-carrot/pantry-roulette.git"
+  },
+  "author": "Ryan",
+  "license": "MIT"
+}
