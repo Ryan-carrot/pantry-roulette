@@ -100,25 +100,25 @@ function filterRecipes(userIngredients, selectedVibe) {
 // Focused functions - separation of concerns
 // Reads from localStorage and parses the JSON string back into a JS array. If nothing is saved yet, it returns an empty array instead of crashing
 function getFavorites() {
-    const stored = localStorage.getItem("pantryRouletteFavorites");
-    return stored ? JSON.parse(stored) : [];
+  const stored = localStorage.getItem("pantryRouletteFavorites");
+  return stored ? JSON.parse(stored) : [];
 }
 
 // Gets the current list, checks if the recipe is already saved to prevent dupes, adds it, and writes it back. Returns true or false so the UI can respond accordingly
 function saveFavorite(recipe) {
-    const favorites = getFavorites();
-    const alreadySaved = favorites.some(fav => fav.name === recipe.name);
-    if (alreadySaved) return false; // Prevent duplicates
-    favorites.push(recipe);
-    localStorage.setItem("pantryRouletteFavorites", JSON.stringify(favorites));
-    return true;
+  const favorites = getFavorites();
+  const alreadySaved = favorites.some(fav => fav.name === recipe.name);
+  if (alreadySaved) return false; // Prevent duplicates
+  favorites.push(recipe);
+  localStorage.setItem("pantryRouletteFavorites", JSON.stringify(favorites));
+  return true;
 }
 
 // Filters out the recipe by name and overwrites localStorage with the updated list
 function removeFavorite(recipeName) {
-    const favorites = getFavorites();
-    const updated = favorites.filter(fav => fav.name !== recipeName);
-    localStorage.setItem("pantryRouletteFavorites", JSON.stringify(updated));
+  const favorites = getFavorites();
+  const updated = favorites.filter(fav => fav.name !== recipeName);
+  localStorage.setItem("pantryRouletteFavorites", JSON.stringify(updated));
 }
 
 // Filter will persist across searches - we'll store previously picked recipe names in localStorage so they survive page refreshes 
@@ -126,21 +126,39 @@ function removeFavorite(recipeName) {
 // When scoring, recipces on that list get a score pneality so fresher results are prioritized
 // List caps at 20 recipes to prevent it from growing indefinitely
 function getSeenRecipes() {
-    const stored = localStorage.getItem("pantryRouletteSeenRecipes");
-    return stored ? JSON.parse(stored) : [];
+  const stored = localStorage.getItem("pantryRouletteSeenRecipes");
+  return stored ? JSON.parse(stored) : [];
 }
 
 function addSeenRecipe(recipeName) {
-    const seen = getSeenRecipes();
-    if (seen.includes(recipeName)) return; // Prevent duplicates
-    seen.push(recipeName);
-    if (seen.length > 20) seen.shift(); // Keep only the last 20 seen recipes
-    localStorage.setItem("pantryRouletteSeenRecipes", JSON.stringify(seen));
+  const seen = getSeenRecipes();
+  if (seen.includes(recipeName)) return; // Prevent duplicates
+  seen.push(recipeName);
+  if (seen.length > 20) seen.shift(); // Keep only the last 20 seen recipes
+  localStorage.setItem("pantryRouletteSeenRecipes", JSON.stringify(seen));
 }
 
 function clearSeenRecipes() {
-    localStorage.removeItem("pantryRouletteSeenRecipes");
+  localStorage.removeItem("pantryRouletteSeenRecipes");
 }
+
+function getRecentlyViewed() {
+  const stored = localStorage.getItem("pantryRouletteRecentlyViewed");
+  return stored ? JSON.parse(stored) : [];
+}
+
+function addRecentlyViewed(recipe) {
+  const recent = getRecentlyViewed();
+  // Remove if already exiists to avoid duplicates
+  const filtered = recent.filter(r => r.name !== recipe.name);
+  // add to the front of the array
+  filtered.unshift(recipe);
+  // Cap at 5
+  const capped = filtered.slice(0, 5);
+  localStorage.setItem("pantryRouletteRecentlyViewed", JSON.stringify(capped));
+}
+
+// End localStorage functions
 
 const btn = document.getElementById("spin-btn");
 const resultDiv = document.getElementById("result");
@@ -472,6 +490,38 @@ function renderFavorites() {
   });
 }
 
+function renderRecentlyViewed() {
+  const recent = getRecentlyViewed();
+  const section = document.getElementById("recently-viewed-section");
+  const list = document.getElementById("recently-viewed-list");
+
+  if (recent.length === 0) {
+    section.classList.add("hidden");
+    return;
+  }
+
+  section.classList.remove("hidden");
+  list.innerHTML = "";
+
+  recent.forEach(recipe => {
+    const card = document.createElement("div");
+    card.classList.add("recent-card");
+    card.innerHTML = `
+      ${recipe.image
+        ? `<img src="${recipe.image}" alt="${recipe.name}" class="recent-img" />`
+        : `<div class="recent-img-placeholder"></div>`
+      }
+      <p class="recent-name">${recipe.name}</p>
+    `;
+
+    card.addEventListener("click", () => {
+      openRecipeModal(recipe);
+    });
+
+    list.appendChild(card);
+  });
+}
+
 // Click handler - main logic lives here
 btn.addEventListener("click", async () => {
   const input = document.getElementById("ingredients").value.trim();
@@ -545,6 +595,7 @@ btn.addEventListener("click", async () => {
     : normalized[Math.floor(Math.random() * normalized.length)];
 
   addSeenRecipe(pick.name);
+  addRecentlyViewed(pick);
 
   // Check if already saved BEFORE building the HTML
   const alreadySaved = getFavorites().some(fav => fav.name === pick.name);
@@ -586,6 +637,7 @@ btn.addEventListener("click", async () => {
   resultDiv.classList.remove("hidden");
   resultDiv.setAttribute("tabindex", "-1");
   resultDiv.focus();
+  renderRecentlyViewed();
 
   // Only attach the click listener if not already saved
   if (!alreadySaved) {
@@ -606,6 +658,8 @@ btn.addEventListener("click", async () => {
 
 // Render favorites on page load
 renderFavorites();
+// Render recently viewed on page load
+renderRecentlyViewed();
 
 document.getElementById("reset-seen-btn").addEventListener("click", () => {
   clearSeenRecipes();
