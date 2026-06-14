@@ -423,15 +423,18 @@ button.spinning {
   animation: slideUp 0.3s ease;
 }
 
-/* ── Modal Close Button ── */
-.modal-image-wrap {
-  position: relative;
-}
-
-.modal-close-btn {
+/* ── Print Button ── */
+.modal-header-btns {
   position: absolute;
   top: 12px;
   right: 12px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  z-index: 10;
+}
+
+.modal-print-btn {
   background: rgba(15, 52, 96, 0.9);
   border: none;
   border-radius: 50%;
@@ -443,7 +446,37 @@ button.spinning {
   cursor: pointer;
   color: #ffffff;
   transition: background 0.2s ease;
-  z-index: 10;
+}
+
+.modal-print-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-right: 0;
+}
+
+.modal-print-btn:hover {
+  background: #ff6b35;
+  transform: none;
+}
+
+/* ── Modal Close Button ── */
+.modal-image-wrap {
+  position: relative;
+}
+
+.modal-close-btn {
+  background: rgba(15, 52, 96, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #ffffff;
+  transition: background 0.2s ease;
 }
 
 .modal-close-btn:hover {

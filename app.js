@@ -249,6 +249,146 @@ function removeFocusTrap() {
   }
 }
 
+// Print button
+document.getElementById("modal-print-btn").addEventListener("click", () => {
+  const title = document.getElementById("modal-title").textContent;
+  const category = document.getElementById("modal-category").textContent;
+  const ingredients = document.getElementById("modal-ingredients").innerHTML;
+  const steps = document.getElementById("modal-steps").innerHTML;
+  const metaTime = document.querySelector(".modal-meta").innerHTML;
+
+  const printWindow = window.open("", "_blank");
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Pantry Roulette — ${title}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            color: black;
+          }
+          h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+          }
+          .category {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ff6b35;
+            font-weight: bold;
+            margin-bottom: 8px;
+          }
+          .meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+          }
+          .meta span {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+          }
+          h3 {
+            font-size: 18px;
+            color: #ff6b35;
+            margin-bottom: 12px;
+            margin-top: 24px;
+            border-bottom: 2px solid #ff6b35;
+            padding-bottom: 6px;
+          }
+          ul {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 24px;
+          }
+          ul li {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-transform: capitalize;
+          }
+          ul li::before {
+            content: "• ";
+            color: #ff6b35;
+          }
+          ol {
+            list-style: none;
+            padding: 0;
+            counter-reset: steps;
+          }
+          ol li {
+            counter-increment: steps;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 12px 12px 12px 48px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            position: relative;
+          }
+          ol li::before {
+            content: counter(steps);
+            position: absolute;
+            left: 12px;
+            top: 14px;
+            background: #ff6b35;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+          }
+          .footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+          }
+        </style>
+      </head>
+      <body>
+        <p class="category">${category}</p>
+        <h2>${title}</h2>
+        <div class="meta">${metaTime}</div>
+        <h3>Ingredients</h3>
+        <ul>${ingredients}</ul>
+        <h3>Instructions</h3>
+        <ol>${steps}</ol>
+        <div class="footer">Printed from pantryroulette.com</div>
+      </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+  }, 500);
+});
+
 // Close button
 document.getElementById("modal-close-btn").addEventListener("click", closeRecipeModal);
 
