@@ -1,6 +1,6 @@
 {
   "name": "pantry-roulette",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A constraint-based recipe finder — tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight.",
   "homepage": "https://pantryroulette.com",
   "repository": {

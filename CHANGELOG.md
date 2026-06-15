@@ -7,6 +7,7 @@ Versioning follows [Semantic Versioning](https://semver.org).
 ## [1.0.0] - 2026-04-26 — Initial Release
 
 ### Added
+
 - Multi-ingredient search with parallel API queries and deduplication
 - 10 vibe profiles with custom keyword scoring engine
 - Smart recipe scoring blending ingredient match and vibe alignment
@@ -19,3 +20,14 @@ Versioning follows [Semantic Versioning](https://semver.org).
 - Custom domain at pantryroulette.com
 - Open Graph social preview tags
 - Google Search Console integration
+
+## [1.0.1] - 2026-06-14 — Quality of Life Update
+
+### Added
+
+- Print recipe button in the full recipe modal
+- Recently viewed section showing your last 5 spins
+
+### Fixed
+
+- Print button alignment issue
