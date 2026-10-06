@@ -1,0 +1,54 @@
+/* Design tokens. Values taken from the v1 stylesheet (HANDOFF §9). */
+:root {
+  /* Colours */
+  --color-bg: #1a1a2e;
+  --color-surface: #16213e;
+  --color-surface-raised: #0f3460;
+  --color-surface-raised-translucent: rgba(15, 52, 96, 0.9);
+  --color-brand: #ff6b35;
+  --color-brand-hover: #e55a25;
+  --color-text: #ffffff;
+  --color-text-body: #e0e0f0;
+  --color-text-secondary: #b8b8d0;
+  --color-text-muted: #a0a0c0;
+  --color-text-hint: #7a8aa0;
+  /* v1 used #5a6a8a (2.9:1 on the card surface). Lifted to pass WCAG AA. */
+  --color-text-dim: #8292ac;
+  --color-placeholder: #a0a0c0;
+  --color-success: #4caf50;
+  --color-footer-border: #1e2d4a;
+  --color-overlay: rgba(0, 0, 0, 0.75);
+
+  /* Shadows */
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-fav: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-fav-hover: 0 6px 24px rgba(0, 0, 0, 0.3);
+
+  /* Type */
+  --font-display: 'Fredoka One', 'Nunito', sans-serif;
+  --font-body: 'Nunito', sans-serif;
+
+  /* Radii */
+  --radius-card: 20px;
+  --radius-modal: 24px;
+  --radius-fav: 16px;
+  --radius-input: 12px;
+  --radius-secondary: 10px;
+  --radius-tile: 8px;
+  --radius-remove: 6px;
+  --radius-fav-img: 10px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 32px;
+
+  /* Motion */
+  --ease-fast: 0.15s ease;
+  --ease: 0.2s ease;
+}

@@ -1,0 +1,28 @@
+.site-footer {
+  text-align: center;
+  padding: var(--space-7) var(--space-6);
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--color-footer-border);
+}
+
+.site-footer p {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.site-footer a {
+  color: var(--color-brand);
+  text-decoration: none;
+  transition: color var(--ease);
+}
+
+.site-footer a:hover {
+  color: var(--color-text);
+}
+
+.footer-badges {
+  margin-top: var(--space-4);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-4);
+}

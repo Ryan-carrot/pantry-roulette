@@ -65,9 +65,17 @@ describe('createMealDbClient', () => {
     const fetchImpl = vi.fn<FetchLike>(() => jsonResponse({ meals: [] }));
     const client = createMealDbClient(fetchImpl);
     await client.searchByIngredient('chicken breast & thyme');
-    expect(fetchImpl).toHaveBeenCalledWith(
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe(
       'https://www.themealdb.com/api/json/v1/1/filter.php?i=chicken%20breast%20%26%20thyme',
     );
+  });
+
+  it('passes an abort signal so a stalled request cannot hang the spin forever', async () => {
+    const fetchImpl = vi.fn<FetchLike>(() => jsonResponse({ meals: [] }));
+    const client = createMealDbClient(fetchImpl);
+    await client.searchByIngredient('eggs');
+    const init = fetchImpl.mock.calls[0]?.[1];
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
   it('returns an empty list when MealDB reports no meals', async () => {
@@ -91,7 +99,7 @@ describe('createMealDbClient', () => {
     );
     const client = createMealDbClient(fetchImpl);
     const meal = await client.lookup('52772');
-    expect(fetchImpl).toHaveBeenCalledWith(
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe(
       'https://www.themealdb.com/api/json/v1/1/lookup.php?i=52772',
     );
     expect(meal?.strMeal).toBe('Teriyaki');

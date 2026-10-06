@@ -1,0 +1,60 @@
+@keyframes pulse {
+  from {
+    transform: scale(1);
+    background: var(--color-brand);
+  }
+  to {
+    transform: scale(1.03);
+    background: var(--color-brand-hover);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.spinning,
+  .result-card,
+  .modal-card,
+  .modal-overlay {
+    animation: none;
+  }
+
+  button,
+  .save-btn,
+  .view-recipe-btn,
+  .reset-btn,
+  .fav-card,
+  .recent-card,
+  .recent-img,
+  .recent-img-placeholder,
+  .skip-link {
+    transition: none;
+  }
+
+  button:hover,
+  .save-btn:hover,
+  .view-recipe-btn:hover,
+  .reset-btn:hover,
+  .fav-card:hover,
+  .recent-card:hover {
+    transform: none;
+  }
+}

@@ -2,8 +2,14 @@ import type { MealDbMeal, MealDbStub } from '../types';
 
 const BASE_URL = 'https://www.themealdb.com/api/json/v1/1';
 
+/** Requests that have not answered within this window are aborted. */
+export const REQUEST_TIMEOUT_MS = 15_000;
+
 /** The subset of `fetch` we rely on, so tests can inject a fake. */
-export type FetchLike = (url: string) => Promise<{
+export type FetchLike = (
+  url: string,
+  init?: { signal?: AbortSignal },
+) => Promise<{
   ok: boolean;
   status: number;
   json(): Promise<unknown>;
@@ -44,7 +50,7 @@ async function getMeals<T>(
   url: string,
   isItem: (v: unknown) => v is T,
 ): Promise<T[]> {
-  const response = await fetchImpl(url);
+  const response = await fetchImpl(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   if (!response.ok) {
     throw new Error(`TheMealDB responded ${response.status} for ${url}`);
   }
@@ -55,7 +61,9 @@ async function getMeals<T>(
   return (body.meals ?? []).filter(isItem);
 }
 
-export function createMealDbClient(fetchImpl: FetchLike = (url) => fetch(url)): MealDbClient {
+export function createMealDbClient(
+  fetchImpl: FetchLike = (url, init) => fetch(url, init),
+): MealDbClient {
   return {
     searchByIngredient(ingredient) {
       const url = `${BASE_URL}/filter.php?i=${encodeURIComponent(ingredient)}`;

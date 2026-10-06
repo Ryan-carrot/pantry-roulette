@@ -1,0 +1,141 @@
+.result-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-card);
+  animation: slideUp 0.4s ease;
+  outline: none;
+}
+
+.result-card.hidden {
+  display: none;
+}
+
+.result-card .result-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-brand);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.result-card h2 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--color-text);
+  margin-bottom: 10px;
+}
+
+.result-card .description {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: var(--space-5);
+}
+
+.result-img {
+  width: 100%;
+  border-radius: var(--radius-input);
+  margin: var(--space-4) 0;
+  object-fit: cover;
+  max-height: 220px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.meta span {
+  background: var(--color-surface-raised);
+  color: var(--color-text-body);
+  padding: var(--space-2) 10px;
+  border-radius: var(--radius-card);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  text-align: center;
+  min-width: 0;
+}
+
+/* Emoji-in-CSS pattern kept from v1 for the pill icons. */
+.meta-ingredients::before {
+  content: '🧄 ';
+}
+
+.meta-score::before {
+  content: '✅ ';
+}
+
+.meta-vibe::before {
+  content: '🎭 ';
+}
+
+.meta-area::before {
+  content: '🌍 ';
+}
+
+.save-btn {
+  margin-top: var(--space-5);
+  background: transparent;
+  border: 2px solid var(--color-brand);
+  color: var(--color-brand);
+  font-family: var(--font-body);
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--radius-secondary);
+  cursor: pointer;
+  transition: all var(--ease);
+  width: 100%;
+}
+
+.save-btn:hover {
+  background: var(--color-brand);
+  color: var(--color-text);
+  transform: translateY(-2px);
+}
+
+.save-btn.saved {
+  border-color: var(--color-success);
+  color: var(--color-success);
+  cursor: default;
+}
+
+.save-btn.saved:hover {
+  background: transparent;
+  transform: none;
+}
+
+.save-note {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: var(--space-3);
+}
+
+.save-note.hidden {
+  display: none;
+}
+
+.view-recipe-btn {
+  margin-top: var(--space-3);
+  background: var(--color-surface-raised);
+  border: 2px solid var(--color-surface-raised);
+  color: var(--color-text-body);
+  font-family: var(--font-body);
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: var(--radius-secondary);
+  cursor: pointer;
+  transition: all var(--ease);
+  width: 100%;
+}
+
+.view-recipe-btn:hover {
+  background: transparent;
+  border-color: var(--color-text-body);
+  transform: translateY(-2px);
+}
