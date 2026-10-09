@@ -69,10 +69,10 @@ function openRecipe(recipe: Recipe, trigger: HTMLElement): void {
 function refreshFavourites(): void {
   renderFavourites(favouritesList, favouritesEmpty, favourites.list(), {
     onView: openRecipe,
-    onRemove(name) {
-      favourites.remove(name);
+    onRemove(key) {
+      favourites.remove(key);
       refreshFavourites();
-      markResultUnsaved(resultRegion, name);
+      markResultUnsaved(resultRegion, key);
     },
   });
 }
@@ -129,11 +129,11 @@ async function spin(): Promise<void> {
       return;
     }
 
-    seen.add(pick.recipe.name);
+    seen.addRecipe(pick.recipe);
     recentlyViewed.add(pick.recipe);
 
     renderResult(resultRegion, pick, {
-      isSaved: favourites.has(pick.recipe.name),
+      isSaved: favourites.has(pick.recipe),
       onSave() {
         const result = favourites.add(pick.recipe);
         if (result === 'added') refreshFavourites();

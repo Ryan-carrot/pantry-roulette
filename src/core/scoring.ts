@@ -1,4 +1,5 @@
 import type { Recipe, ScoredRecipe } from '../types';
+import { isSeen } from './identity';
 import { scoreRecipeForVibe } from './vibes';
 
 const INGREDIENT_WEIGHT = 0.5;
@@ -23,13 +24,13 @@ export function scoreRecipe(
   recipe: Recipe,
   userIngredients: readonly string[],
   vibe: string,
-  seenNames: ReadonlySet<string>,
+  seenKeys: ReadonlySet<string>,
 ): ScoredRecipe {
   const matchedCount = recipe.ingredients.filter((i) => userIngredients.includes(i)).length;
   const ingredientMatch =
     recipe.ingredients.length === 0 ? 0 : matchedCount / recipe.ingredients.length;
   const vibeScore = scoreRecipeForVibe(recipe, vibe);
-  const seen = seenNames.has(recipe.name);
+  const seen = isSeen(seenKeys, recipe);
 
   let blendedScore = ingredientMatch * INGREDIENT_WEIGHT + vibeScore * VIBE_WEIGHT;
   if (seen) blendedScore *= SEEN_PENALTY;
@@ -42,10 +43,10 @@ export function rankRecipes(
   candidates: readonly Recipe[],
   userIngredients: readonly string[],
   vibe: string,
-  seenNames: ReadonlySet<string>,
+  seenKeys: ReadonlySet<string>,
 ): ScoredRecipe[] {
   return candidates
-    .map((recipe) => scoreRecipe(recipe, userIngredients, vibe, seenNames))
+    .map((recipe) => scoreRecipe(recipe, userIngredients, vibe, seenKeys))
     .filter((scored) => scored.blendedScore > 0)
     .sort((a, b) => b.blendedScore - a.blendedScore);
 }
@@ -58,10 +59,10 @@ export function pickRecipe(
   candidates: readonly Recipe[],
   userIngredients: readonly string[],
   vibe: string,
-  seenNames: ReadonlySet<string>,
+  seenKeys: ReadonlySet<string>,
   random: () => number = Math.random,
 ): ScoredRecipe | null {
-  const ranked = rankRecipes(candidates, userIngredients, vibe, seenNames);
+  const ranked = rankRecipes(candidates, userIngredients, vibe, seenKeys);
   const best = ranked[0];
   if (best) return best;
 
@@ -69,5 +70,5 @@ export function pickRecipe(
   const index = Math.min(candidates.length - 1, Math.floor(random() * candidates.length));
   const fallback = candidates[index];
   if (!fallback) return null;
-  return scoreRecipe(fallback, userIngredients, vibe, seenNames);
+  return scoreRecipe(fallback, userIngredients, vibe, seenKeys);
 }

@@ -62,10 +62,20 @@ describe('scoreRecipe', () => {
 
   it('keeps ingredientMatch untouched by the seen penalty but scales blendedScore by 0.3', () => {
     const fresh = scoreRecipe(recipe(), ['eggs', 'butter'], 'hearty', new Set());
-    const seen = scoreRecipe(recipe(), ['eggs', 'butter'], 'hearty', new Set(['Test Dish']));
+    const seen = scoreRecipe(recipe(), ['eggs', 'butter'], 'hearty', new Set(['1']));
     expect(seen.seen).toBe(true);
     expect(seen.ingredientMatch).toBe(fresh.ingredientMatch);
     expect(seen.blendedScore).toBeCloseTo(fresh.blendedScore * 0.3, 10);
+  });
+
+  it('applies the seen penalty by id, so a different meal with the same title is not penalised', () => {
+    const other = scoreRecipe(recipe({ id: '2' }), ['eggs', 'butter'], 'hearty', new Set(['1']));
+    expect(other.seen).toBe(false);
+  });
+
+  it('still honours a legacy seen list of names', () => {
+    const seen = scoreRecipe(recipe(), ['eggs', 'butter'], 'hearty', new Set(['Test Dish']));
+    expect(seen.seen).toBe(true);
   });
 
   it('returns 0 ingredientMatch for a recipe with no ingredients instead of NaN', () => {

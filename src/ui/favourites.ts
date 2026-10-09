@@ -1,9 +1,11 @@
+import { recipeKey } from '../core/identity';
 import type { Recipe } from '../types';
 import { el, replaceChildren, svgIcon } from './el';
 
 export interface FavouriteHandlers {
   onView: (recipe: Recipe, trigger: HTMLElement) => void;
-  onRemove: (name: string) => void;
+  /** Receives recipeKey(recipe): the id, or the name for legacy entries. */
+  onRemove: (key: string) => void;
 }
 
 export function renderFavourites(
@@ -31,14 +33,14 @@ export function renderFavourites(
 
       const removeButton = el(
         'button',
-        { class: 'remove-btn', 'data-name': recipe.name, 'aria-label': `Remove ${recipe.name} from favorites` },
+        { class: 'remove-btn', 'data-key': recipeKey(recipe), 'aria-label': `Remove ${recipe.name} from favorites` },
         [svgIcon('close', { size: 16 })],
       );
       removeButton.addEventListener('click', (event) => {
         // currentTarget is always the button, whatever child the pointer hit.
         const button = event.currentTarget as HTMLButtonElement;
-        const name = button.dataset['name'];
-        if (name !== undefined) handlers.onRemove(name);
+        const key = button.dataset['key'];
+        if (key !== undefined) handlers.onRemove(key);
       });
 
       return el('div', { class: 'fav-card' }, [

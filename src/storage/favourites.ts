@@ -1,3 +1,4 @@
+import { recipeKey, sameRecipe, type RecipeRef } from '../core/identity';
 import type { Recipe } from '../types';
 import { readRecipes, toStoredRecipe } from './recipeCodec';
 import { readArray, writeJson, type StorageLike } from './storage';
@@ -11,28 +12,29 @@ export type AddResult = 'added' | 'exists' | 'full';
 
 export interface FavouritesStore {
   list(): Recipe[];
-  has(name: string): boolean;
+  has(recipe: RecipeRef): boolean;
   add(recipe: Recipe): AddResult;
-  remove(name: string): void;
+  /** Remove by recipeKey: the id, or the name for legacy entries. */
+  remove(key: string): void;
 }
 
 export function createFavouritesStore(storage: StorageLike): FavouritesStore {
   const list = () => readRecipes(readArray(storage, FAVOURITES_KEY));
   return {
     list,
-    has: (name) => list().some((r) => r.name === name),
+    has: (recipe) => list().some((r) => sameRecipe(r, recipe)),
     add(recipe) {
       const current = list();
-      if (current.some((r) => r.name === recipe.name)) return 'exists';
+      if (current.some((r) => sameRecipe(r, recipe))) return 'exists';
       if (current.length >= FAVOURITES_CAP) return 'full';
       writeJson(storage, FAVOURITES_KEY, [...current, toStoredRecipe(recipe)]);
       return 'added';
     },
-    remove(name) {
+    remove(key) {
       writeJson(
         storage,
         FAVOURITES_KEY,
-        list().filter((r) => r.name !== name),
+        list().filter((r) => recipeKey(r) !== key),
       );
     },
   };

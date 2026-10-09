@@ -5,7 +5,7 @@ import { renderFavourites } from '../src/ui/favourites';
 import { createModal } from '../src/ui/modal';
 import { buildPrintDocument } from '../src/ui/print';
 import { renderRecentlyViewed } from '../src/ui/recentlyViewed';
-import { renderMessage, renderResult } from '../src/ui/resultCard';
+import { markResultUnsaved, renderMessage, renderResult } from '../src/ui/resultCard';
 import type { Recipe, ScoredRecipe } from '../src/types';
 
 function recipe(overrides: Partial<Recipe> = {}): Recipe {
@@ -138,6 +138,18 @@ describe('renderResult', () => {
     expect(container.querySelector('.save-note')?.textContent).toMatch(/full/i);
   });
 
+  it('flips back to unsaved only when the removed key matches the shown recipe', () => {
+    renderResult(container, scored({ recipe: recipe({ id: '1', name: 'Lasagne' }) }), {
+      isSaved: true,
+      onSave: () => 'exists',
+      onView: () => {},
+    });
+    markResultUnsaved(container, '2');
+    expect(container.querySelector<HTMLButtonElement>('#save-btn')?.disabled).toBe(true);
+    markResultUnsaved(container, '1');
+    expect(container.querySelector<HTMLButtonElement>('#save-btn')?.disabled).toBe(false);
+  });
+
   it('passes the view button through to onView', () => {
     const onView = vi.fn();
     renderResult(container, scored(), { isSaved: false, onSave: () => 'added', onView });
@@ -187,7 +199,7 @@ describe('renderFavourites', () => {
     const list = el('div');
     const empty = el('p');
     const onRemove = vi.fn();
-    renderFavourites(list, empty, [recipe({ name: 'A' }), recipe({ name: 'B' })], {
+    renderFavourites(list, empty, [recipe({ id: '1', name: 'A' }), recipe({ id: '2', name: 'B' })], {
       onView: () => {},
       onRemove,
     });
@@ -195,7 +207,18 @@ describe('renderFavourites', () => {
     const secondRemove = list.querySelectorAll('.remove-btn')[1];
     const svg = secondRemove?.querySelector('svg');
     svg?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(onRemove).toHaveBeenCalledWith('B');
+    expect(onRemove).toHaveBeenCalledWith('2');
+  });
+
+  it('removes a legacy favourite by name when it has no id', () => {
+    const list = el('div');
+    const onRemove = vi.fn();
+    renderFavourites(list, el('p'), [recipe({ id: null, name: 'Legacy Pie' })], {
+      onView: () => {},
+      onRemove,
+    });
+    list.querySelector<HTMLButtonElement>('.remove-btn')?.click();
+    expect(onRemove).toHaveBeenCalledWith('Legacy Pie');
   });
 
   it('has no time pill and no markup injection', () => {

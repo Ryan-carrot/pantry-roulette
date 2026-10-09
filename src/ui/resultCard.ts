@@ -1,3 +1,4 @@
+import { recipeKey } from '../core/identity';
 import type { AddResult } from '../storage/favourites';
 import type { ScoredRecipe } from '../types';
 import { el, replaceChildren, svgIcon } from './el';
@@ -34,7 +35,12 @@ export function renderResult(
   const scorePercent = Math.round(scored.blendedScore * 100);
   const vibePercent = Math.round(scored.vibeScore * 100);
 
-  const saveButton = el('button', { id: 'save-btn', class: 'save-btn', 'data-recipe-name': recipe.name });
+  const saveButton = el('button', {
+    id: 'save-btn',
+    class: 'save-btn',
+    'data-recipe-key': recipeKey(recipe),
+    'data-recipe-name': recipe.name,
+  });
   setSavedState(saveButton, recipe.name, handlers.isSaved);
 
   const note = el('p', { class: 'save-note hidden', role: 'status' });
@@ -80,8 +86,9 @@ export function renderMessage(container: HTMLElement, message: string): void {
   replaceChildren(container, [el('p', { class: 'no-match' }, [message])]);
 }
 
-/** Flip the result card's save button back to unsaved (after a favourite is removed). */
-export function markResultUnsaved(container: HTMLElement, name: string): void {
+/** Flip the result card's save button back to unsaved (after a favourite is removed by key). */
+export function markResultUnsaved(container: HTMLElement, key: string): void {
   const button = container.querySelector<HTMLButtonElement>('#save-btn');
-  if (button && button.dataset['recipeName'] === name) setSavedState(button, name, false);
+  if (!button || button.dataset['recipeKey'] !== key) return;
+  setSavedState(button, button.dataset['recipeName'] ?? '', false);
 }

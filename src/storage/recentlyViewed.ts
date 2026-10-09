@@ -1,3 +1,4 @@
+import { sameRecipe } from '../core/identity';
 import type { Recipe } from '../types';
 import { readRecipes, toStoredRecipe } from './recipeCodec';
 import { readArray, writeJson, type StorageLike } from './storage';
@@ -16,7 +17,7 @@ export function createRecentlyViewedStore(storage: StorageLike): RecentlyViewedS
   return {
     list,
     add(recipe) {
-      const rest = list().filter((r) => r.name !== recipe.name);
+      const rest = list().filter((r) => !sameRecipe(r, recipe));
       writeJson(
         storage,
         RECENTLY_VIEWED_KEY,
