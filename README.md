@@ -49,6 +49,7 @@ src/
   storage/                typed localStorage wrappers; every read is guarded and validated
   ui/el.ts                typed createElement helper and inline SVG icons
   ui/resultCard.ts        result region, save and view buttons, messages
+  ui/clearHistory.ts      "Clear seen history" button with its two-second confirmation
   ui/favourites.ts        favourite cards
   ui/recentlyViewed.ts    recently viewed buttons
   ui/modal.ts             recipe modal: fill, focus trap, focus return, Escape, backdrop
@@ -77,7 +78,7 @@ Identity is the TheMealDB `id`; v1 entries (no `id`, no `instructions`, extra sc
 
 Run `npm run dev`, then:
 
-1. Spin with one ingredient (`chicken`). A result appears, focus moves to it, the spin button reads "Spin the Pantry 🎰" again.
+1. Spin with one ingredient (`chicken`). A result appears, focus moves to it, the spin button reads "Spin the Pantry 🎰" again. Click "Clear seen history": it reads "History cleared" for two seconds, keeps its icon, and `pantryRouletteSeenRecipes` is gone from localStorage.
 2. Spin with three (`chicken, rice, garlic`) and five (`beef, potato, onion, carrot, tomato`). The ingredients pill should reflect overlap and later ingredients should influence the pick.
 3. Cycle all ten vibes with the same ingredients. Lazy and Simple should favour short recipes, Impressive long ones; the vibe pill should move.
 4. Save a favourite. The button turns green and disables; the card appears under "Your Favorites". Remove it by clicking the × icon itself; the save button on the result card flips back.

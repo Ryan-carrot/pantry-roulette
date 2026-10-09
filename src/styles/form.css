@@ -82,6 +82,12 @@ button.spinning {
   pointer-events: none;
 }
 
+.clear-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .reset-btn {
   background: transparent;
   border: 2px solid var(--color-text-dim);

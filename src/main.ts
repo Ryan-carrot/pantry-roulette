@@ -9,6 +9,7 @@ import { createRecentlyViewedStore } from './storage/recentlyViewed';
 import { createSeenStore } from './storage/seen';
 import type { StorageLike } from './storage/storage';
 import type { Recipe } from './types';
+import { wireClearHistory } from './ui/clearHistory';
 import { renderFavourites } from './ui/favourites';
 import { createModal } from './ui/modal';
 import { printRecipe } from './ui/print';
@@ -51,8 +52,8 @@ const ingredientsInput = byId<HTMLInputElement>('ingredients');
 const vibeSelect = byId<HTMLSelectElement>('vibe');
 const spinButton = byId<HTMLButtonElement>('spin-btn');
 const spinText = byId<HTMLSpanElement>('btn-text');
-const resetButton = byId<HTMLButtonElement>('reset-seen-btn');
-const resetText = byId<HTMLSpanElement>('reset-text');
+const clearHistoryButton = byId<HTMLButtonElement>('clear-history-btn');
+const clearHistoryText = byId<HTMLSpanElement>('clear-history-text');
 const resultRegion = byId<HTMLDivElement>('result');
 const recentSection = byId<HTMLElement>('recently-viewed-section');
 const recentList = byId<HTMLDivElement>('recently-viewed-list');
@@ -62,7 +63,6 @@ const favouritesEmpty = byId<HTMLParagraphElement>('favorites-empty');
 /* The idle label comes from the HTML so the two can never drift apart. */
 const SPIN_IDLE_LABEL = spinText.textContent ?? 'Spin the Pantry 🎰';
 const SPIN_BUSY_LABEL = 'Spinning... 🎰';
-const RESET_IDLE_LABEL = resetText.textContent ?? 'Reset Suggestions';
 
 const modal = createModal(document, { onPrint: printRecipe });
 
@@ -161,15 +161,7 @@ ingredientsInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') void spin();
 });
 
-let resetTimer: number | undefined;
-resetButton.addEventListener('click', () => {
-  seen.clear();
-  resetText.textContent = 'Reset!';
-  window.clearTimeout(resetTimer);
-  resetTimer = window.setTimeout(() => {
-    resetText.textContent = RESET_IDLE_LABEL;
-  }, 2000);
-});
+wireClearHistory(clearHistoryButton, clearHistoryText, () => seen.clear());
 
 refreshFavourites();
 refreshRecentlyViewed();
