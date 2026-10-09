@@ -2,7 +2,7 @@
 
 Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight.
 
-Live at [pantryroulette.com](https://pantryroulette.com). This is the v2 rebuild: same product, same look, same vibe engine, rebuilt in TypeScript with tests and the v1 bugs fixed. See [CHANGELOG.md](CHANGELOG.md) for the list.
+Live at [pantryroulette.com](https://pantryroulette.com). This is the v2 rebuild: same product, same look, same vibe engine, rebuilt in TypeScript with tests and the v1 bugs fixed. See [CHANGELOG.md](CHANGELOG.md) for the list and [ROADMAP.md](ROADMAP.md) for what comes next.
 
 ## How it works
 
@@ -41,6 +41,8 @@ src/
   main.ts                 bootstrap: wires storage, API, UI and the spin flow
   types.ts                Recipe, ScoredRecipe, VibeKey, VibeProfile, MealDB shapes
   api/mealdb.ts           fetch client (injected fetch, 15s timeout), interleave, dedup, cap
+  api/loadRecipes.ts      stubs → recipes via the session cache, one lookup per unseen id
+  core/identity.ts        recipeKey / sameRecipe / isSeen: id with name fallback for v1 entries
   core/normalize.ts       MealDB meal → Recipe (pure)
   core/vibes.ts           vibeProfiles (verbatim from v1) + scoreRecipeForVibe (pure)
   core/scoring.ts         parseIngredients, ingredient overlap, blend, seen penalty, pick (pure)
@@ -67,8 +69,9 @@ Unchanged from v1 so existing data carries over.
 | `pantryRouletteFavorites` | `Recipe[]`, insertion order | 50 (new in v2; the save button tells you when it is full) |
 | `pantryRouletteSeenRecipes` | `string[]` of names, oldest first | 20 |
 | `pantryRouletteRecentlyViewed` | `Recipe[]`, newest first | 5 |
+| `pantryRouletteLookup:<id>` (sessionStorage) | one normalised `Recipe` per TheMealDB id | none; cleared with the tab |
 
-v1 entries (no `id`, no `instructions`, extra score fields) are read and upgraded on the fly. Corrupt values are ignored, not thrown.
+Identity is the TheMealDB `id`; v1 entries (no `id`, no `instructions`, extra score fields) are read and upgraded on the fly and matched by name. Corrupt values are ignored, not thrown.
 
 ## Manual smoke test
 
@@ -81,9 +84,10 @@ Run `npm run dev`, then:
 5. Keyboard only: Tab to a "Recently viewed" card, press Enter or Space. The modal opens with focus on the close button. Tab wraps between print and close. Escape closes it and focus lands back on the card you came from.
 6. Open the modal from "View Full Recipe" and press Print. A new window with the Arial-on-white layout opens and the print dialog appears. Block pop-ups and try again: the modal shows a status line instead of throwing.
 7. In DevTools, set `localStorage.pantryRouletteFavorites = '{broken'` and reload. The page loads, favourites are empty, nothing is thrown.
-8. Spin with an empty input: "Enter at least one ingredient". Spin with `unobtainium`: "Nothing found". Go offline and spin: the connection message.
-9. Resize to 320, 400 and 600 px. Nothing overflows; the modal is a bottom sheet below 600 and a centred card above.
-10. Enable "reduce motion" in the OS. The spin pulse, card slide and modal fade are gone.
+8. Spin with an empty input: "Enter at least one ingredient". Spin with `unobtainium`: "Nothing found". Go offline and spin: the connection message. Block one ingredient's `filter.php` request in DevTools and spin with two: the result appears with "Couldn't search for: ..." underneath.
+9. Spin twice with the same ingredients and watch the Network tab: the second spin makes no `lookup.php` requests.
+10. Resize to 320, 400 and 600 px. Nothing overflows; the modal is a bottom sheet below 600 and a centred card above.
+11. Enable "reduce motion" in the OS. The spin pulse, card slide and modal fade are gone.
 
 ## Licence
 

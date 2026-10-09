@@ -13,32 +13,26 @@ Builder notes for Ryan. Branch `rebuild/v2`, six commits, 100 tests, `vite build
 
 ## 2. Decisions you should review
 
-**Repository and files.** This directory was not fresh: it is a clone of the production repo with `origin` pointing at GitHub (push already disabled) and CRLF-only churn in the working tree. The session's permission rules blocked deleting files, so I did not `git init`, did not remove the remote, and did not delete the v1 sources. Instead I branched `rebuild/v2` off `main` and built on top. Still in the working tree and awaiting your `git rm` / `rm`: `app.js`, `vibes.js`, `recipes.js`, `style.css`, the root `sitemap.xml` (the live one is now `public/sitemap.xml`), `favicon_io.zip` and the two `Zone.Identifier` files (both now gitignored). Nothing in the build references them. Decide whether you want the v2 history squashed onto `main` or kept as a branch.
+Updated after the release-readiness pass (commits `97d37d2` to the docs commit). Every item flagged in the first pass has a decision recorded in the brief; what follows is what is still open or newly worth a look.
 
-**Scope additions, all small.**
+**Resolved by the release pass.**
 
-- Pressing Enter in the ingredients input spins. v1 had no form, so Enter did nothing.
-- The modal meta row shows "N ingredients" and the cuisine (`strArea`) pill where the time pill was. Both come straight from the API.
-- A 15 s abort timeout on every MealDB request. During smoke testing a 5-ingredient spin hung for over 30 s once (MealDB throttling a burst from earlier spins, I think); without a timeout the spin button would have stayed disabled forever.
-- An in-memory storage fallback when `localStorage` throws (private mode, blocked storage).
-- A "Favorites are full (50)" note under the save button when `add()` returns `'full'`.
-- The save button reads "Saved to Favorites" with a filled heart in both the pre-saved and just-saved states (v1 had "Already Saved" vs "Saved! ✅").
-- The spin button says "Spin the Pantry 🎰" in the HTML as well as after a spin (v1 HTML had no emoji; JS added it after the first spin).
+- Branch kept; you merge `--no-ff`. v1 sources removed in `1a1f2f8`.
+- White on orange fixed with `--color-on-accent: #1a1a2e` (6.02:1 on brand, 4.73:1 on pulse end). The orange is unchanged.
+- `simple.lengthWeight` retuned to 0.3; all ten profiles sum to 1.0. Logged in the changelog as the one deliberate scoring change.
+- Identity by `idMeal` with name fallback for legacy entries (`src/core/identity.ts`). No migration.
+- Lookup cache in `sessionStorage`. Measured in the headless smoke run: a cold three-ingredient spin made 3 filter + 28 lookup requests; the same spin again made 3 + 0; adding a fourth ingredient made 4 + 5. Per-spin cost is now `ingredients + uncached candidate ids`.
+- Partial-failure notice under the result. Note the distinction: a misspelled ingredient is not a failure, it is an empty result list and shows nothing. The notice fires only when the request itself fails (network, HTTP error, timeout).
+- Description fallback is "No description available."
+- Deploy workflow added; `dist/` contains `CNAME` and the sitemap with today's `lastmod`.
 
-**Identity stays by name.** `idMeal` is captured and persisted on every new entry, but favourites, seen and recently viewed are still keyed by `name` so a user's existing localStorage keeps working with no migration. Two different MealDB meals with the same title would still collide. Switching to id would need a one-time migration that re-fetches v1 entries by name, or accepting that pre-v2 entries lose dedup.
+**Still worth a look.**
 
-**Favourites cap semantics.** 50, and the store refuses the 51st rather than dropping the oldest. Silently discarding a saved recipe felt worse than a message.
-
-**Description fallback kept.** `"A delicious meal worth trying."` is still the description when a meal has no instructions. It is filler, not data, but it is copy the product shipped with. Easy to change to "No description available." if you prefer.
-
-**Dev dependency added.** `happy-dom`, so the renderers, the modal and the print document builder have unit tests (`tests/ui.test.ts`). The brief's test layout listed only the pure modules; I went further because the modal focus logic and the `el()` helper are where the v1 bugs lived. Vitest needed `css: true` in `vite.config.ts` for the `print.css?raw` import to resolve in tests.
-
-**Not done, deliberately.**
-
-- No `inert` on the page behind the modal (§10 gap). `aria-modal` plus the focus trap covers it; adding `inert` to `.container` would need the modal moved outside it.
-- Partial network failure (one ingredient's request fails, others succeed) proceeds silently with what came back. `findCandidates` reports `failedIngredients`, so showing a note is a few lines if you want it.
-- Scoring design untouched: substring keyword matching ("rest" matches "restaurant"), exact-equality ingredient matching, multiplier seen penalty. The handoff's §14 questions 5, 6 and 9 are still open.
-- Favicon and OG assets copied as-is into `public/`. `base` is `/` in `vite.config.ts`, which is right for the custom domain. If you ever serve from `/pantry-roulette/` it needs changing.
+- The seen list now stores ids for new spins and keeps any v1 names. A v1 name that matches a new recipe's title still penalises it. Harmless, and it ages out of the 20-slot FIFO.
+- `fetchRecipeDetails` was removed with the cache; `loadRecipes` is the only detail path.
+- Partial failures with one ingredient down proceed and show the note. If you would rather block, `findCandidates` already returns what you need.
+- Scoring design otherwise untouched: substring keywords, exact-equality ingredient matching, multiplier seen penalty (handoff §14 Q5, Q6, Q9).
+- No `inert` behind the modal and the print flow still uses `window.open`, per the brief.
 
 ## 3. Three feature proposals (not built)
 
@@ -74,6 +68,6 @@ Builder notes for Ryan. Branch `rebuild/v2`, six commits, 100 tests, `vite build
 
 ## 4. Things I am unsure about
 
-- Whether the sporadic MealDB stall I saw is throttling. The 15 s timeout handles it either way, but a real rate limit might deserve a lookup cache keyed by `idMeal` in `sessionStorage` (handoff §14 Q12).
-- Emoji rendering in the CSS `::before` pills: the headless smoke browser had no emoji font, so I could not visually confirm them. The pattern is the same as v1.
-- `exactOptionalPropertyTypes` is on in `tsconfig.json`. It is stricter than the brief asked for and it caught one real mistake in a test, but it makes some third-party types noisier. Easy to drop if it gets in the way.
+- Emoji in the CSS `::before` pills still cannot be confirmed visually; the headless smoke browser has no emoji font. Same pattern as v1.
+- The deploy workflow has not run anywhere yet. It is a standard Pages pipeline (`upload-pages-artifact` v3, `deploy-pages` v4) and needs Pages set to "GitHub Actions" as the source in the production repo settings before the first push to `main`.
+- `sessionStorage` quota: each cached recipe is a few KB and a long session could cache a few hundred ids. Writes are best-effort and a quota error is swallowed, so the worst case is a cache miss, not a crash.

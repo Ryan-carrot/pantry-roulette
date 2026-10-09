@@ -21,6 +21,9 @@ Full rebuild. Same product, UX, visual identity and vibe engine semantics; new f
 - The print document is built with DOM APIs, survives a blocked pop-up with a visible message, and closes after printing rather than before.
 - Reset keeps its icon; the spin button label is the same before and after a spin.
 - Dim text (`#5a6a8a`) lifted to `#8292ac` so it clears WCAG AA on the card surface.
+- Text on orange surfaces (spin button, skip link, step counters, hover states) is dark navy via a new `--color-on-accent` token: 6.0:1 on the brand orange and 4.7:1 on the pulse end colour, where white was 2.8:1 and 3.6:1.
+- Favourites, the seen list and recently viewed are keyed by TheMealDB `idMeal`, falling back to the name only for v1 entries that have none. Two different meals with the same title no longer collide.
+- Recipes with no instructions read "No description available." instead of "A delicious meal worth trying.".
 
 ### Removed
 
@@ -37,8 +40,12 @@ All 23 items from the rebuild handoff; see [BUGS_RESOLVED.md](BUGS_RESOLVED.md).
 
 - `prefers-reduced-motion` support.
 - A 15 s timeout on every TheMealDB request.
+- A per-session cache of normalised lookups in `sessionStorage`, keyed by `idMeal`. A repeat spin with overlapping candidates makes no lookup calls for them.
+- A status line under the result naming any ingredient whose search failed, when the spin still found a recipe.
+- A GitHub Pages deploy workflow (`.github/workflows/deploy.yml`): test, typecheck, build, publish `dist/` on push to `main`.
 - A connection-failure message distinct from "nothing found".
 - Validation and upgrade of v1 localStorage entries on read.
+- `ROADMAP.md` with the v2.1 decisions.
 - Google Fonts preconnect, a `<noscript>` notice, `.editorconfig`, `.gitattributes`.
 
 ## [1.0.1] — 2026-06-14
