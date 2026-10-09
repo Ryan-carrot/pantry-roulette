@@ -24,6 +24,7 @@ Full rebuild. Same product, UX, visual identity and vibe engine semantics; new f
 - Text on orange surfaces (spin button, skip link, step counters, hover states) is dark navy via a new `--color-on-accent` token: 6.0:1 on the brand orange and 4.7:1 on the pulse end colour, where white was 2.8:1 and 3.6:1.
 - Favourites, the seen list and recently viewed are keyed by TheMealDB `idMeal`, falling back to the name only for v1 entries that have none. Two different meals with the same title no longer collide.
 - Recipes with no instructions read "No description available." instead of "A delicious meal worth trying.".
+- "Reset Suggestions" is now "Clear seen history", with a hint explaining that it lets previously shown recipes come back and a "History cleared" confirmation. The button never generated suggestions.
 
 ### Removed
 
@@ -33,6 +34,8 @@ Full rebuild. Same product, UX, visual identity and vibe engine semantics; new f
 - Debug logging.
 
 ### Fixed
+
+Ranking ties (common when ingredient overlap is zero) are now broken by matched count, then name, so the same input gives the same pick on a cold spin and on a cached spin. Before, the pick depended on candidate pool order and could change after clearing history.
 
 All 23 items from the rebuild handoff; see [BUGS_RESOLVED.md](BUGS_RESOLVED.md). In short: instructions never reaching the vibe engine, unencoded ingredients, the misleading "% match" pill, the favourites remove handler, missing focus return, unguarded `JSON.parse`, markup injection from recipe names, the fabricated cook time, uncapped favourites, console noise, label drift, mixed indentation, the ingredient-starving cap, the unreachable fallback and silent crash on an empty pool, network errors shown as "no results", concurrent spins, print window crashes, mouse-only recently viewed cards, the discarded `idMeal`, spin scores leaking into storage, the Fazier link, CRLF churn, and dead CSS.
 
