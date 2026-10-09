@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   createMealDbClient,
-  fetchRecipeDetails,
   findCandidates,
   interleave,
   mergeCandidates,
@@ -144,18 +143,5 @@ describe('findCandidates', () => {
     });
     const result = await findCandidates(client, ['eggs'], { perIngredientCap: 10, totalCap: 30 });
     expect(result.candidates).toHaveLength(10);
-  });
-});
-
-describe('fetchRecipeDetails', () => {
-  it('drops failed and missing lookups and keeps the rest', async () => {
-    const client = createMealDbClient((url) => {
-      const i = new URL(url).searchParams.get('i');
-      if (i === '2') return Promise.reject(new Error('boom'));
-      if (i === '3') return jsonResponse({ meals: null });
-      return jsonResponse({ meals: [{ idMeal: i, strMeal: `Meal ${i}` }] });
-    });
-    const meals = await fetchRecipeDetails(client, [stub('1'), stub('2'), stub('3'), stub('4')]);
-    expect(meals.map((m) => m.idMeal)).toEqual(['1', '4']);
   });
 });

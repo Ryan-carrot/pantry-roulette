@@ -1,9 +1,10 @@
 import './styles/index.css';
 
-import { createMealDbClient, fetchRecipeDetails, findCandidates } from './api/mealdb';
-import { normalizeMeal } from './core/normalize';
+import { loadRecipes } from './api/loadRecipes';
+import { createMealDbClient, findCandidates } from './api/mealdb';
 import { parseIngredients, pickRecipe } from './core/scoring';
 import { createFavouritesStore } from './storage/favourites';
+import { createLookupCache } from './storage/lookupCache';
 import { createRecentlyViewedStore } from './storage/recentlyViewed';
 import { createSeenStore } from './storage/seen';
 import type { StorageLike } from './storage/storage';
@@ -20,13 +21,14 @@ function byId<T extends HTMLElement>(id: string): T {
   return node as T;
 }
 
-/** localStorage can throw in private windows or when blocked; fall back to memory. */
-function resolveStorage(): StorageLike {
+/** Web storage can throw in private windows or when blocked; fall back to memory. */
+function resolveStorage(pick: () => Storage): StorageLike {
   try {
+    const storage = pick();
     const probe = '__pantry_probe__';
-    window.localStorage.setItem(probe, '1');
-    window.localStorage.removeItem(probe);
-    return window.localStorage;
+    storage.setItem(probe, '1');
+    storage.removeItem(probe);
+    return storage;
   } catch {
     const map = new Map<string, string>();
     return {
@@ -37,11 +39,13 @@ function resolveStorage(): StorageLike {
   }
 }
 
-const storage = resolveStorage();
+const storage = resolveStorage(() => window.localStorage);
+const sessionCache = resolveStorage(() => window.sessionStorage);
 const favourites = createFavouritesStore(storage);
 const seen = createSeenStore(storage);
 const recentlyViewed = createRecentlyViewedStore(storage);
 const mealDb = createMealDbClient();
+const lookupCache = createLookupCache(sessionCache);
 
 const ingredientsInput = byId<HTMLInputElement>('ingredients');
 const vibeSelect = byId<HTMLSelectElement>('vibe');
@@ -120,8 +124,7 @@ async function spin(): Promise<void> {
       return;
     }
 
-    const meals = await fetchRecipeDetails(mealDb, search.candidates);
-    const recipes = meals.map(normalizeMeal);
+    const recipes = await loadRecipes(mealDb, lookupCache, search.candidates);
     const pick = pickRecipe(recipes, userIngredients, vibe, seen.asSet());
 
     if (!pick) {

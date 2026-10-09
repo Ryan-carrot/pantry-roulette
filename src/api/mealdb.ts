@@ -145,16 +145,3 @@ export async function findCandidates(
 
   return { candidates: mergeCandidates(lists, totalCap), failedIngredients };
 }
-
-/** Look up every stub in parallel, dropping failures and unknown ids. */
-export async function fetchRecipeDetails(
-  client: MealDbClient,
-  stubs: readonly MealDbStub[],
-): Promise<MealDbMeal[]> {
-  const settled = await Promise.allSettled(stubs.map((s) => client.lookup(s.idMeal)));
-  const meals: MealDbMeal[] = [];
-  for (const result of settled) {
-    if (result.status === 'fulfilled' && result.value !== null) meals.push(result.value);
-  }
-  return meals;
-}
