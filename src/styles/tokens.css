@@ -7,6 +7,8 @@
   --color-surface-raised-translucent: rgba(15, 52, 96, 0.9);
   --color-brand: #ff6b35;
   --color-brand-hover: #e55a25;
+  /* Foreground on the orange: 6.0:1 on brand, 4.7:1 on brand-hover. White was 2.8:1. */
+  --color-on-accent: #1a1a2e;
   --color-text: #ffffff;
   --color-text-body: #e0e0f0;
   --color-text-secondary: #b8b8d0;

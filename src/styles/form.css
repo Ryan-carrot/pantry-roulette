@@ -51,7 +51,7 @@ button {
   font-weight: 400;
   letter-spacing: 1px;
   background: var(--color-brand);
-  color: var(--color-text);
+  color: var(--color-on-accent);
   border: none;
   border-radius: var(--radius-input);
   cursor: pointer;

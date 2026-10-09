@@ -1,5 +1,6 @@
 :root {
   --print-brand: #ff6b35;
+  --print-on-brand: #1a1a2e;
   --print-text: #000000;
   --print-muted: #999999;
   --print-tile: #f5f5f5;
@@ -101,7 +102,7 @@ ol li::before {
   left: 12px;
   top: 14px;
   background: var(--print-brand);
-  color: white;
+  color: var(--print-on-brand);
   width: 24px;
   height: 24px;
   border-radius: 50%;

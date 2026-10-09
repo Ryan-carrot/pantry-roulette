@@ -55,7 +55,7 @@ body.modal-open {
   top: -100px;
   left: 0;
   background: var(--color-brand);
-  color: var(--color-text);
+  color: var(--color-on-accent);
   padding: 10px 20px;
   border-radius: 0 0 var(--radius-tile) 0;
   font-family: var(--font-body);

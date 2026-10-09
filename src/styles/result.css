@@ -94,7 +94,7 @@
 
 .save-btn:hover {
   background: var(--color-brand);
-  color: var(--color-text);
+  color: var(--color-on-accent);
   transform: translateY(-2px);
 }
 
