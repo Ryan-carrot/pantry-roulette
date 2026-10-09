@@ -11,6 +11,7 @@ Full rebuild. Same product, UX, visual identity and vibe engine semantics; new f
 - Rebuilt on Vite + TypeScript (strict) with Vitest. 100 unit tests cover normalisation, the vibe engine, scoring, the API merge logic, storage and the DOM renderers.
 - Code split by responsibility: `api/`, `core/` (pure), `storage/`, `ui/`, `styles/`.
 - All colours, radii, shadows, fonts and spacing are CSS custom properties in `tokens.css`.
+- The `simple` vibe's `lengthWeight` is 0.3 (was 0.2), so its weights sum to 1.0 like every other profile. This is the one deliberate change to v1 scoring semantics; `simple` could previously never score above 0.9.
 - The vibe engine now reads the real instruction text. Keyword and length scoring work for the first time, so vibe scores differentiate recipes instead of sitting at 10 to 20%.
 - The result card labels the blended value "score" and the ingredient overlap "X/Y ingredients". Nothing is labelled "match".
 - Candidate selection interleaves per-ingredient results before the 30-slot cap, so a fourth or fifth ingredient contributes.

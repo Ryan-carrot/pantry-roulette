@@ -15,12 +15,11 @@ describe('vibeProfiles', () => {
     expect(Object.keys(vibeProfiles).sort()).toEqual([...VIBE_KEYS].sort());
   });
 
-  it('weights sum to 1.0 for every profile except simple, which the original left at 0.9', () => {
+  it('weights sum to 1.0 for all ten profiles', () => {
     for (const key of VIBE_KEYS) {
       const p = vibeProfiles[key];
       const sum = p.ingredientWeight + p.keywordWeight + (p.lengthWeight ?? 0);
-      const expected = key === 'simple' ? 0.9 : 1.0;
-      expect(sum, key).toBeCloseTo(expected, 10);
+      expect(sum, key).toBeCloseTo(1.0, 10);
     }
   });
 

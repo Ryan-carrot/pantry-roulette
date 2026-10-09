@@ -1,9 +1,8 @@
 import { isVibeKey, type Recipe, type VibeKey, type VibeProfile } from '../types';
 
 /**
- * Vibe profiles, reproduced verbatim from the original vibes.js.
- * Weights are intentionally not retuned. Note `simple` sums to 0.9, not 1.0,
- * exactly as shipped in v1.
+ * Vibe profiles, reproduced from the original vibes.js. One deliberate
+ * change: `simple.lengthWeight` is 0.3 (v1: 0.2) so every profile sums to 1.0.
  */
 export const vibeProfiles: Readonly<Record<VibeKey, VibeProfile>> = {
   lazy: {
@@ -63,7 +62,8 @@ export const vibeProfiles: Readonly<Record<VibeKey, VibeProfile>> = {
     maxInstructionLength: 400,
     ingredientWeight: 0.3,
     keywordWeight: 0.4,
-    lengthWeight: 0.2,
+    // v1 shipped 0.2 (sum 0.9). Retuned to 0.3 so the profile sums to 1.0 like impressive.
+    lengthWeight: 0.3,
   },
 };
 
