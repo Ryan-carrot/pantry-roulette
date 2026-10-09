@@ -38,6 +38,22 @@ export function scoreRecipe(
   return { recipe, matchedCount, ingredientMatch, vibeScore, blendedScore, seen };
 }
 
+/**
+ * Deterministic ranking: blended score desc, then matched ingredient count
+ * desc, then name asc (case-insensitive, locale-independent). Ties are
+ * common when ingredient overlap is zero, and the pool order differs
+ * between cold and cached spins, so the comparator must settle them.
+ */
+export function compareScored(a: ScoredRecipe, b: ScoredRecipe): number {
+  if (b.blendedScore !== a.blendedScore) return b.blendedScore - a.blendedScore;
+  if (b.matchedCount !== a.matchedCount) return b.matchedCount - a.matchedCount;
+  const an = a.recipe.name.toLowerCase();
+  const bn = b.recipe.name.toLowerCase();
+  if (an < bn) return -1;
+  if (an > bn) return 1;
+  return 0;
+}
+
 /** Score every candidate, drop zero scores, sort best first. Pure. */
 export function rankRecipes(
   candidates: readonly Recipe[],
@@ -48,7 +64,7 @@ export function rankRecipes(
   return candidates
     .map((recipe) => scoreRecipe(recipe, userIngredients, vibe, seenKeys))
     .filter((scored) => scored.blendedScore > 0)
-    .sort((a, b) => b.blendedScore - a.blendedScore);
+    .sort(compareScored);
 }
 
 /**

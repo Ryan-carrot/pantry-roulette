@@ -100,6 +100,33 @@ describe('rankRecipes', () => {
   });
 });
 
+describe('rankRecipes tiebreak', () => {
+  it('breaks a blended-score tie by matched count, then by name, regardless of input order', () => {
+    // Same ingredient lists, same instructions: identical vibe and ingredient scores.
+    const banana = recipe({ id: '1', name: 'Banana Pancakes' });
+    const apple = recipe({ id: '2', name: 'Apple Pie' });
+    const forward = rankRecipes([banana, apple], ['eggs'], 'hearty', new Set());
+    const reverse = rankRecipes([apple, banana], ['eggs'], 'hearty', new Set());
+    expect(forward.map((r) => r.recipe.name)).toEqual(['Apple Pie', 'Banana Pancakes']);
+    expect(reverse.map((r) => r.recipe.name)).toEqual(['Apple Pie', 'Banana Pancakes']);
+  });
+
+  it('prefers more matched ingredients when blended scores tie', () => {
+    // b matches 2 of 4, a matches 1 of 2: same ingredientMatch, same vibe, different matchedCount.
+    const a = recipe({ id: '1', name: 'Aaa', ingredients: ['eggs', 'x'] });
+    const b = recipe({ id: '2', name: 'Zzz', ingredients: ['eggs', 'milk', 'y', 'z'] });
+    const ranked = rankRecipes([a, b], ['eggs', 'milk'], 'hearty', new Set());
+    expect(ranked.map((r) => r.recipe.name)).toEqual(['Zzz', 'Aaa']);
+  });
+
+  it('compares names case-insensitively', () => {
+    const lower = recipe({ id: '1', name: 'apple crumble' });
+    const upper = recipe({ id: '2', name: 'Banana Bread' });
+    const ranked = rankRecipes([upper, lower], ['eggs'], 'hearty', new Set());
+    expect(ranked[0]?.recipe.name).toBe('apple crumble');
+  });
+});
+
 describe('pickRecipe', () => {
   it('returns the top-ranked candidate', () => {
     const a = recipe({ name: 'A', ingredients: ['eggs', 'x', 'y', 'z'] });

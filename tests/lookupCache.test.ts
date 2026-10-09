@@ -89,6 +89,39 @@ describe('loadRecipes', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(4);
   });
 
+  it('returns recipes in candidate order even when lookups resolve out of order', async () => {
+    const delays: Record<string, number> = { '1': 30, '2': 0, '3': 15 };
+    const fetchImpl: FetchLike = (url) => {
+      const id = new URL(url).searchParams.get('i') ?? '';
+      return new Promise((resolve) =>
+        setTimeout(
+          () =>
+            resolve({
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve({ meals: [{ idMeal: id, strMeal: `Meal ${id}` }] }),
+            }),
+          delays[id] ?? 0,
+        ),
+      );
+    };
+    const client = createMealDbClient(fetchImpl);
+    const cache = createLookupCache(createMemoryStorage());
+    const cold = await loadRecipes(client, cache, [stub('1'), stub('2'), stub('3')]);
+    expect(cold.map((r) => r.id)).toEqual(['1', '2', '3']);
+    const warm = await loadRecipes(client, cache, [stub('1'), stub('2'), stub('3')]);
+    expect(warm.map((r) => r.id)).toEqual(['1', '2', '3']);
+  });
+
+  it('keeps candidate order when some ids are cached and others are fetched', async () => {
+    const { client } = clientCounting();
+    const cache = createLookupCache(createMemoryStorage());
+    cache.set(recipe({ id: '2', name: 'Cached 2' }));
+    const recipes = await loadRecipes(client, cache, [stub('1'), stub('2'), stub('3')]);
+    expect(recipes.map((r) => r.id)).toEqual(['1', '2', '3']);
+    expect(recipes[1]?.name).toBe('Cached 2');
+  });
+
   it('drops failed lookups and does not cache them', async () => {
     const { client, fetchImpl } = clientCounting();
     const cache = createLookupCache(createMemoryStorage());
