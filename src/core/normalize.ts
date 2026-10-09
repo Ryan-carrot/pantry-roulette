@@ -2,7 +2,7 @@ import type { MealDbMeal, Recipe } from '../types';
 
 const MAX_INGREDIENT_SLOTS = 20;
 const DESCRIPTION_LENGTH = 120;
-const FALLBACK_DESCRIPTION = 'A delicious meal worth trying.';
+const FALLBACK_DESCRIPTION = 'No description available.';
 
 function orNull(value: string | null | undefined): string | null {
   return value ? value : null;

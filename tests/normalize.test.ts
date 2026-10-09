@@ -75,7 +75,7 @@ describe('normalizeMeal', () => {
     const recipe = normalizeMeal(meal({ strInstructions: null }));
     expect(recipe.instructions).toBe('');
     expect(recipe.steps).toEqual([]);
-    expect(recipe.description).toBe('A delicious meal worth trying.');
+    expect(recipe.description).toBe('No description available.');
   });
 
   it('does not invent a cook time', () => {
