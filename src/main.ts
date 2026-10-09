@@ -143,6 +143,7 @@ async function spin(): Promise<void> {
         return result;
       },
       onView: (trigger) => openRecipe(pick.recipe, trigger),
+      failedIngredients: search.failedIngredients,
     });
     resultRegion.classList.remove('hidden');
     resultRegion.focus();

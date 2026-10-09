@@ -7,6 +7,8 @@ export interface ResultHandlers {
   isSaved: boolean;
   onSave: () => AddResult;
   onView: (trigger: HTMLElement) => void;
+  /** Ingredients whose filter request failed; rendered as a non-blocking note. */
+  failedIngredients?: readonly string[];
 }
 
 const SAVE_LABEL = 'Save to Favorites';
@@ -78,6 +80,11 @@ export function renderResult(
     saveButton,
     note,
     viewButton,
+    handlers.failedIngredients && handlers.failedIngredients.length > 0
+      ? el('p', { class: 'search-note', role: 'status' }, [
+          `Couldn't search for: ${handlers.failedIngredients.join(', ')}`,
+        ])
+      : null,
   ]);
 }
 

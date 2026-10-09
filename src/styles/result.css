@@ -120,6 +120,13 @@
   display: none;
 }
 
+.search-note {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: var(--space-4);
+}
+
 .view-recipe-btn {
   margin-top: var(--space-3);
   background: var(--color-surface-raised);

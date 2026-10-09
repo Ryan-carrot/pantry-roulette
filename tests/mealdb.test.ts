@@ -136,6 +136,13 @@ describe('findCandidates', () => {
     expect(result.failedIngredients).toEqual(['milk']);
   });
 
+  it('reports every ingredient as failed with no candidates when the service is down', async () => {
+    const client = createMealDbClient(() => Promise.reject(new TypeError('Failed to fetch')));
+    const result = await findCandidates(client, ['eggs', 'milk']);
+    expect(result.candidates).toEqual([]);
+    expect(result.failedIngredients).toEqual(['eggs', 'milk']);
+  });
+
   it('caps each ingredient list before interleaving', async () => {
     const client = createMealDbClient((url) => {
       const i = new URL(url).searchParams.get('i') ?? '';

@@ -157,6 +157,23 @@ describe('renderResult', () => {
     expect(onView).toHaveBeenCalledTimes(1);
   });
 
+  it('lists ingredients whose search failed in a status line under the card', () => {
+    renderResult(container, scored(), {
+      isSaved: false,
+      onSave: () => 'added',
+      onView: () => {},
+      failedIngredients: ['olive oil', 'soy sauce'],
+    });
+    const note = container.querySelector('.search-note');
+    expect(note?.textContent).toBe("Couldn't search for: olive oil, soy sauce");
+    expect(note?.getAttribute('role')).toBe('status');
+  });
+
+  it('renders no search note when every ingredient search succeeded', () => {
+    renderResult(container, scored(), { isSaved: false, onSave: () => 'added', onView: () => {} });
+    expect(container.querySelector('.search-note')).toBeNull();
+  });
+
   it('renders a plain message', () => {
     renderMessage(container, 'Nothing found');
     expect(container.querySelector('.no-match')?.textContent).toBe('Nothing found');
