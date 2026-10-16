@@ -1,7 +1,8 @@
 # Bugs resolved
 
-Every item from HANDOFF.md §11, with the commit and file that addresses it.
-Commits are on the `rebuild/v2` branch.
+> This document is primary input to the hand-code spec (`handoff/HANDCODE_SPEC.md`). Each row names the sandbox file that shows a working fix; the spec says how to carry it into the vanilla production app, and `handoff/ISSUES_TO_CREATE.md` has ready-to-paste GitHub issues for the rows that do not have one yet (#13 to #24).
+
+Every item from the scout's HANDOFF.md §11, plus #24 from manual testing, with the commit and file that addresses it. Commits are on the `rebuild/v2` branch of this sandbox.
 
 | Commit | Phase |
 |---|---|

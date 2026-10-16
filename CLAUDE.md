@@ -1,0 +1,3 @@
+# Pantry Roulette (sandbox)
+
+This directory is a local, experimental rebuild of Pantry Roulette. It has no remote, is never deployed, and nothing in it ships. Its job is to work out the logic, behaviour and (later) a redesigned UI that Ryan will hand-code himself in the public production repo, as practice and as a portfolio piece; agent-written code never goes into that repo. So the standard here is readability for a human who will rebuild it by hand: small modules with one responsibility, obvious data flow, tests that state intent, comments that say why, and every design decision written down (`handoff/DECISIONS.md`). `~/projects/CLAUDE.md` applies in full and cannot be relaxed here.

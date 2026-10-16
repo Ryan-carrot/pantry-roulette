@@ -1,6 +1,8 @@
 # Rebuild report
 
-Builder notes for Ryan. Branch `rebuild/v2`, six commits, 100 tests, `vite build` output 9.4 kB HTML + 14.7 kB CSS + 19.0 kB JS (2.6 / 3.3 / 7.2 kB gzipped).
+> **Read this first.** When this report was written the rebuild was being treated as a candidate to replace the production site. That was the wrong frame. This directory is a local sandbox: no remote, no deploys, nothing shipped. Its output is a reference implementation and a set of written-down decisions that Ryan uses to hand-code the production app himself in the public repo. Everything below is kept as a record of what was found and why things were built the way they were; the merge and deploy guidance that used to be here has been removed. The condensed, per-decision version lives in `handoff/DECISIONS.md`, and the build plan in `handoff/HANDCODE_SPEC.md`.
+
+Builder notes for Ryan. Branch `rebuild/v2`; 20 commits across three passes (rebuild, release readiness, pre-merge fix); 132 tests. Build output at the end of the third pass: 9.4 kB HTML + 14.9 kB CSS + 19.7 kB JS (2.6 / 3.3 / 7.5 kB gzipped), measured for reference only.
 
 ## 1. Where I disagreed with the handoff, or found it inaccurate
 
@@ -13,18 +15,20 @@ Builder notes for Ryan. Branch `rebuild/v2`, six commits, 100 tests, `vite build
 
 ## 2. Decisions you should review
 
-Updated after the release-readiness pass (commits `97d37d2` to the docs commit). Every item flagged in the first pass has a decision recorded in the brief; what follows is what is still open or newly worth a look.
+Updated after the release-readiness pass (commits `97d37d2` to `d4101bb`) and the pre-merge fix (`2db8941` to `3c614ad`). Every item flagged in the first pass got a decision; what follows is what was resolved and what is still worth a look when hand-coding.
 
-**Resolved by the release pass.**
+**Resolved by the later passes.**
 
-- Branch kept; you merge `--no-ff`. v1 sources removed in `1a1f2f8`.
+- v1 sources removed in `1a1f2f8`; the sandbox tree is TypeScript only.
 - White on orange fixed with `--color-on-accent: #1a1a2e` (6.02:1 on brand, 4.73:1 on pulse end). The orange is unchanged.
 - `simple.lengthWeight` retuned to 0.3; all ten profiles sum to 1.0. Logged in the changelog as the one deliberate scoring change.
 - Identity by `idMeal` with name fallback for legacy entries (`src/core/identity.ts`). No migration.
 - Lookup cache in `sessionStorage`. Measured in the headless smoke run: a cold three-ingredient spin made 3 filter + 28 lookup requests; the same spin again made 3 + 0; adding a fourth ingredient made 4 + 5. Per-spin cost is now `ingredients + uncached candidate ids`.
 - Partial-failure notice under the result. Note the distinction: a misspelled ingredient is not a failure, it is an empty result list and shows nothing. The notice fires only when the request itself fails (network, HTTP error, timeout).
 - Description fallback is "No description available."
-- Deploy workflow added; `dist/` contains `CNAME` and the sitemap with today's `lastmod`.
+- A GitHub Pages deploy workflow was added in `51503cb` and removed again in `64b9a10` once the project was reframed as local-only. `CNAME`, the sitemap, the OG image and the social meta tags were removed for the same reason. Favicons stay because the sandbox still renders in a browser tab.
+- Ranking ties are broken deterministically (`2db8941`); the "Banana Pancakes then Apple Pie" repro from manual testing no longer happens.
+- "Reset Suggestions" is "Clear seen history" (`a5c0873`); the button only ever cleared the list.
 
 **Still worth a look.**
 
@@ -33,6 +37,7 @@ Updated after the release-readiness pass (commits `97d37d2` to the docs commit).
 - Partial failures with one ingredient down proceed and show the note. If you would rather block, `findCandidates` already returns what you need.
 - Scoring design otherwise untouched: substring keywords, exact-equality ingredient matching, multiplier seen penalty (handoff §14 Q5, Q6, Q9).
 - No `inert` behind the modal and the print flow still uses `window.open`, per the brief.
+- Manual testing asked for a different seen-list behaviour: exclusion instead of a 0.3× penalty, with a "you've seen everything" message. Recorded in `ROADMAP.md` as the next logic experiment.
 
 ## 3. Three feature proposals (not built)
 
@@ -69,5 +74,5 @@ Updated after the release-readiness pass (commits `97d37d2` to the docs commit).
 ## 4. Things I am unsure about
 
 - Emoji in the CSS `::before` pills still cannot be confirmed visually; the headless smoke browser has no emoji font. Same pattern as v1.
-- The deploy workflow has not run anywhere yet. It is a standard Pages pipeline (`upload-pages-artifact` v3, `deploy-pages` v4) and needs Pages set to "GitHub Actions" as the source in the production repo settings before the first push to `main`.
+- Emoji pills were confirmed rendering in Ryan's manual round 1, so that worry is closed; the headless limitation remains for any future automated check.
 - `sessionStorage` quota: each cached recipe is a few KB and a long session could cache a few hundred ids. Writes are best-effort and a quota error is swallowed, so the worst case is a cache miss, not a crash.

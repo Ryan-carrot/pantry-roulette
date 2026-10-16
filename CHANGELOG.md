@@ -1,10 +1,10 @@
 # Changelog
 
-All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
+> Versions here are informal and nothing in this directory was ever released. This file is a record of what was built in the sandbox and why, kept so the reasoning survives. The v1.0.x entries at the bottom describe the production app this rebuild started from.
 
-## [2.0.0] — Unreleased
+## Rebuild (sandbox, October 2026)
 
-Full rebuild. Same product, UX, visual identity and vibe engine semantics; new foundations.
+Full rebuild of the production app in TypeScript with tests. Same product, UX, visual identity and vibe engine semantics; new foundations. Everything listed below is reference material for the hand-coded production build, not a shipped release.
 
 ### Changed
 
@@ -45,10 +45,10 @@ All 23 items from the rebuild handoff; see [BUGS_RESOLVED.md](BUGS_RESOLVED.md).
 - A 15 s timeout on every TheMealDB request.
 - A per-session cache of normalised lookups in `sessionStorage`, keyed by `idMeal`. A repeat spin with overlapping candidates makes no lookup calls for them.
 - A status line under the result naming any ingredient whose search failed, when the spin still found a recipe.
-- A GitHub Pages deploy workflow (`.github/workflows/deploy.yml`): test, typecheck, build, publish `dist/` on push to `main`.
+- A GitHub Pages deploy workflow, later removed along with `CNAME`, the sitemap and the social meta tags when the project was reframed as local-only.
 - A connection-failure message distinct from "nothing found".
 - Validation and upgrade of v1 localStorage entries on read.
-- `ROADMAP.md` with the v2.1 decisions.
+- `ROADMAP.md` with the experiments to run next.
 - Google Fonts preconnect, a `<noscript>` notice, `.editorconfig`, `.gitattributes`.
 
 ## [1.0.1] — 2026-06-14
