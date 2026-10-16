@@ -1,0 +1,98 @@
+# Decisions
+
+Every design decision made during the rebuild, one per line, with the reasoning. Grouped by module. Commit hashes are on the sandbox's `rebuild/v2` branch. When something in `HANDCODE_SPEC.md` looks arbitrary, the line for it is here.
+
+## Project and repository
+
+- **Branch, not `git init`.** The directory was a clone with history and a push-disabled remote, not a fresh folder, and the session could not delete files. Built on `rebuild/v2` instead; history preserved. (Pass 1.)
+- **Vite vanilla-ts, strict TypeScript, Vitest.** Fixed by the brief. `exactOptionalPropertyTypes` added on top because it caught a real mistake in a test on day one; kept after review.
+- **happy-dom as a dev dependency.** The brief listed only pure-module tests; the modal focus logic and the `el()` helper are where the v1 bugs lived, so DOM tests were worth one more dev dependency. `css: true` in the Vitest config is needed only so the `print.css?raw` import resolves in tests.
+- **Old v1 sources left in place, then removed by Ryan** (`1a1f2f8`). The session's permission rules blocked deletion; flagging beat working around it.
+- **Deploy workflow added (`51503cb`) then removed (`64b9a10`).** Added when the rebuild was framed as a production candidate; removed when `~/projects/CLAUDE.md` reframed every project as local-only. `CNAME`, sitemap, OG image and social meta removed for the same reason (`0d00276`). Favicons stay because the sandbox still opens in a tab.
+- **Remote removed by Ryan** before the reframe pass. The sandbox never pushes.
+
+## Data model (`src/types.ts`, `src/core/normalize.ts`)
+
+- **`Recipe` holds only facts about the meal.** Spin scores live in a `ScoredRecipe` wrapper `{ recipe, matchedCount, ingredientMatch, vibeScore, blendedScore, seen }`, never spread onto the recipe. Stops v1's score fields leaking into favourites (bug 20) without a strip step at every write.
+- **`instructions` kept as the raw string next to `steps`.** The vibe engine reads text and length; the UI reads steps. Re-joining steps would guess at newlines the length thresholds were tuned against (bug 1).
+- **`id` and `area` captured.** `id` for identity (bug 19); `area` because it costs nothing and fills the modal meta row where the fake time was.
+- **No `time` field.** TheMealDB has none; v1's constant 30 was the one untrue thing on the card (bug 8). Estimation deferred to its own experiment so the parser gets its own tests.
+- **Optional fields are `null`, never `undefined`.** Survives `JSON.stringify` unchanged and reads the same from storage as from the API.
+- **Description = first 120 chars of step one + "...", exactly as v1.** Derived from real data, so kept. Fallback changed from "A delicious meal worth trying." to "No description available." on Ryan's decision: the old line was filler shown as a blurb.
+
+## API layer (`src/api/mealdb.ts`, `src/api/loadRecipes.ts`)
+
+- **`encodeURIComponent` only, no underscore conversion.** Checked against the live API: `%20`, `_` and `+` all return the same meals for `chicken breast`. The scout's handoff said this was undeterminable; it was a thirty-second curl.
+- **Injected `fetch`.** The client takes a `fetch`-shaped function so tests pass a fake and count calls. No mocking library.
+- **Non-ok responses and malformed bodies throw.** v1 swallowed everything into `[]`, so "offline" looked like "no results" (bug 15). `{ meals: null }` is the API's real empty answer and stays a successful `[]`.
+- **`Promise.allSettled` over per-ingredient calls, with `failedIngredients` reported.** One bad request must not sink three good ones. Results are read by index so order is input order.
+- **Round-robin interleave, then dedup, then cap at 30.** v1's input-order concatenation starved the fourth ingredient (bug 13). Dedup before the cap so a meal under two ingredients does not use two slots. Per-ingredient cap of 10 kept from v1.
+- **15 s `AbortSignal.timeout` on every request.** A five-ingredient spin hung past 30 s once in testing (throttling, probably). With the button disabled during a spin, no timeout means a dead page.
+- **Session cache of normalised recipes, one `sessionStorage` key per id.** Cuts a repeat spin from about 28 lookups to 0 and removes the request burst. Normalised rather than raw so cache reads feed scoring directly. Per-id keys rather than one blob so a write is a few KB, not the whole cache. Tab lifetime is the TTL; nothing to invalidate. Failed lookups are not cached so a later spin retries.
+- **Results kept in candidate order on both the cold and cached paths.** `allSettled` plus an index loop. Pinned by tests after the tiebreak bug made order matter.
+- **`fetchRecipeDetails` removed** once `loadRecipes` existed; one detail path only.
+
+## Scoring (`src/core/vibes.ts`, `src/core/scoring.ts`, `src/core/identity.ts`)
+
+- **`vibeProfiles` reproduced from v1; one weight retuned.** `simple.lengthWeight` 0.2 → 0.3 so all ten profiles sum to 1.0 (`b3a6802`, Ryan's decision after the first pass flagged it). v1's `simple` could never score above 0.9. Everything else, including substring keyword matching and the exact thresholds, is untouched so behaviour is comparable rather than redesigned.
+- **`scoreRecipeForVibe` returns 0 for an unknown vibe**, as v1 did, rather than throwing; the select value is user-controlled at runtime.
+- **Ingredient match stays exact string equality.** Fuzzy matching is a separate experiment; changing it here would have muddied the comparison with v1.
+- **Blend is `ingredient × 0.5 + vibe × 0.5`, then `× 0.3` if seen**, exactly v1. The fix was in what gets displayed, not the formula (bug 3).
+- **`ingredientMatch` is 0, not NaN, for a recipe with no ingredients.** Guard the division.
+- **Deterministic comparator: blended desc, matched count desc, name asc.** Ties are common with zero overlap; pool order differs between cold and cached spins; manual testing saw two different picks for one input (bug 24, `2db8941`). Name comparison is lowercased `<`/`>`, not `localeCompare`, so it does not depend on the user's locale.
+- **`pickRecipe` returns `null` on an empty pool; random fallback takes an injected RNG.** v1 indexed an empty array and threw silently (bug 14). Injection makes the fallback testable and keeps `Math.random` out of the primary path.
+- **Seen check: `seen.has(id) || seen.has(name)`.** Ids for new entries, names for lists the current production app wrote. No migration.
+- **Seen penalty stays a multiplier in this build.** Manual round 2 asked for exclusion with a "you've seen everything" message; recorded in `ROADMAP.md` as the next logic experiment rather than changed mid-pass.
+- **`parseIngredients` lives with scoring, not fetch.** Both need the cleaned list; the parser is pure.
+
+## Storage (`src/storage/*`)
+
+- **Same key names as v1.** Users keep their favourites, seen list and recently viewed with no migration (bug 6 context).
+- **Every read is try/catch, including `getItem` itself; every write too.** Storage is best-effort. A corrupt value yields an empty list, not a dead page (bug 6).
+- **Shape validation on read; v1 entries upgraded on the fly.** `name` is the only hard requirement; `id` defaults to `null`, `instructions` is derived from `steps`, score fields dropped. Discarding a bad entry beats crashing on it.
+- **`toStoredRecipe` strips to the `Recipe` shape on write.** Belt and braces with the wrapper type; guarantees nothing contextual persists (bug 20).
+- **Favourites cap 50, `add()` returns `'added' | 'exists' | 'full'`.** v1 had no cap (bug 9). Refusing the 51st with a message beat silently dropping a saved recipe. A string return, not a boolean, so the UI can tell "full" from "already saved".
+- **Seen cap 20 FIFO, recently viewed cap 5 newest-first**, both exactly v1.
+- **Identity by `id ?? name`.** Ryan's decision after the first pass kept name-only for carry-over. `sameRecipe` compares ids when both exist, names otherwise; `recipeKey` is what the remove button carries. Never `a.id === b.id` alone, because `null === null`.
+- **Seen list stores `recipeKey`** (ids for new spins). Legacy names remain and age out of the 20-slot FIFO.
+- **In-memory fallback when web storage throws.** Private windows. The stores take any object with `getItem`/`setItem`/`removeItem`, which is also what makes them testable.
+- **Lookup cache in `sessionStorage`, same helpers as the other stores.** See API layer.
+
+## UI (`src/ui/*`, `src/main.ts`, `index.html`)
+
+- **No `innerHTML` with interpolated strings; a typed `el()` helper instead** (bug 7). Recipe names from the API break attributes and inject markup. The helper keeps call sites short; SVG icons via `createElementNS`.
+- **Result card pills: "X/Y ingredients", "N% score", "N% vibe".** The blend is never called "match" (bug 3). The "% vibe" pill kept because it is true and useful.
+- **Cook-time pill removed everywhere; modal meta shows ingredient count and cuisine instead** (bug 8). Both are real data.
+- **Modal `open(recipe, trigger)` records the trigger explicitly and `close()` focuses it on all three paths** (bug 5). Explicit beats reading `activeElement` after a click has already moved focus. Skip the focus if the trigger left the DOM.
+- **Escape listener added on open, removed on close.** Not a permanent global.
+- **Focus trap recomputes focusables on each Tab.** Cheap, and correct if the modal's buttons change.
+- **Recently viewed cards are `<button>`s with CSS resets** (bug 18). Free keyboard handling beats re-implementing it on a div.
+- **Favourites remove reads `event.currentTarget.dataset.key`; the `pointer-events: none` rule is gone** (bug 4).
+- **Spin button `disabled` plus an `inFlight` flag, reset in `finally`** (bug 16). `pointer-events: none` does not stop Enter.
+- **Spin idle label read from the HTML at startup** (bug 11). One source of truth. The 🎰 is in the HTML.
+- **Save button copy unified to "Saved to Favorites" with a filled heart** in both the pre-saved and just-saved states (bug 11). v1 had two different strings.
+- **"Reset Suggestions" → "Clear seen history"** with a hint and a two-second "History cleared" swap of the text span only (`a5c0873`, Ryan's decision after manual testing). The button never generated suggestions; the name made a tie look like a bug. Swapping a span keeps the SVG and the accessible name stable.
+- **Enter in the ingredients input spins.** Small addition; Ryan kept it.
+- **Partial-failure line under the result, `role="status"`.** Says which ingredient could not be searched when the spin still succeeded. A misspelling is an empty result, not a failure, and gets no line.
+- **Four distinct empty-result messages**: blank input, nothing found, service unreachable, details failed. Each maps to something the user can do.
+- **Print: new window, DOM-built, null-window guard, `afterprint` close** (bug 17). The brief fixed the new-window approach; a print stylesheet on the modal is the noted alternative. Built from the `Recipe`, not the modal's markup, so it is independent of what the modal shows.
+- **Print document carries its own small token set** (`--print-brand` etc.) because it cannot read the page's custom properties.
+- **Fazier badge link gets `rel="noopener"` and the doubled slash removed** (bug 21). Google Fonts `preconnect` and a `<noscript>` line added (bug 22).
+- **`aria-label` on `#vibe` and `aria-describedby="modal-body"` removed.** Label-in-name mismatch, and a description that reads the buttons. `aria-labelledby="modal-title"` is enough.
+- **No `inert` behind the modal.** Would need the modal moved out of `.container`; `aria-modal` plus the trap covers it. Left as is on Ryan's decision.
+
+## Styles (`src/styles/*`)
+
+- **Every value a custom property in `tokens.css`; component files use no raw hex.** The v1 stylesheet had 21 copies of the orange. (Production issue #34.)
+- **`--color-on-accent: #1a1a2e`** as the foreground on orange: 6.02:1 on brand, 4.73:1 on the pulse end; white was 2.84:1 and 3.61:1 (`97d37d2`, Ryan's decision: fix the foreground, not the orange).
+- **`#5a6a8a` → `#8292ac` for dim text, `#a0a0c0` for placeholders.** 2.92:1 and 2.30:1 became 5.04:1 and 4.93:1.
+- **`prefers-reduced-motion` targets the specific animated selectors**, not `*`. Readable, and does not catch a future functional animation.
+- **`--font-display` falls back to Nunito, not `cursive`.** v1's `cursive` fallback rendered Comic Sans if the webfont failed.
+- **The 320 / 400 / 600 breakpoints are each declared once**, in `responsive.css`; v1 declared two of them twice with a "targeted fixes" override block at the end.
+- **Visual identity otherwise reproduced exactly** (navy surfaces, orange, Fredoka One + Nunito, pill row, bottom-sheet modal) so behaviour could be compared like for like. The redesign is a separate experiment with its own brief.
+
+## Testing
+
+- **Tests before code for every behavioural change**, and the project suite run before every commit. One slip (a commit made while another item's test was red) was reset and recommitted in the right order.
+- **Pure modules tested with plain data; fetch and storage injected.** No mocking library, no network, no real `localStorage`.
+- **Headless smoke script in the scratchpad, not the repo.** Drove the built site through spins, keyboard paths, print, corrupt storage and breakpoints. Not committed because it depends on a locally installed Chromium and is not part of the deliverable.
