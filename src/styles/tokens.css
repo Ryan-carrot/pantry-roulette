@@ -1,44 +1,47 @@
-/* Design tokens. Values taken from the v1 stylesheet (HANDOFF §9). */
+/*
+ * Design tokens for the chosen direction (C's skeleton, B's sheet structure).
+ * Every colour, size, radius and motion value lives here. Component files
+ * reference tokens only; the single human-readable reference is design/SYSTEM.md.
+ */
 :root {
-  /* Colours */
-  --color-bg: #1a1a2e;
-  --color-surface: #16213e;
-  --color-surface-raised: #0f3460;
-  --color-surface-raised-translucent: rgba(15, 52, 96, 0.9);
-  --color-brand: #ff6b35;
-  --color-brand-hover: #e55a25;
-  /* Foreground on the orange: 6.0:1 on brand, 4.7:1 on brand-hover. White was 2.8:1. */
-  --color-on-accent: #1a1a2e;
-  --color-text: #ffffff;
-  --color-text-body: #e0e0f0;
-  --color-text-secondary: #b8b8d0;
-  --color-text-muted: #a0a0c0;
-  --color-text-hint: #7a8aa0;
-  /* v1 used #5a6a8a (2.9:1 on the card surface). Lifted to pass WCAG AA. */
-  --color-text-dim: #8292ac;
-  --color-placeholder: #a0a0c0;
-  --color-success: #4caf50;
-  --color-footer-border: #1e2d4a;
-  --color-overlay: rgba(0, 0, 0, 0.75);
+  /* Surfaces: an aubergine-black room */
+  --surface: #100c18;        /* page */
+  --elevated: #1a1426;       /* card, sheet, reel, dial, inputs */
+  --raised: #261d38;         /* pills, ingredient rows, stepper, ghost buttons */
+  --line: #3a2f52;           /* outlines and dividers */
 
-  /* Shadows */
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
-  --shadow-fav: 0 4px 16px rgba(0, 0, 0, 0.2);
-  --shadow-fav-hover: 0 6px 24px rgba(0, 0, 0, 0.3);
+  /* Text, three levels */
+  --text-1: #fbf6ff;         /* titles, step numerals: 18.1 on surface, 16.8 on elevated, 15.0 on raised */
+  --text-2: #c9bfdd;         /* body, measures: 11.0 / 10.2 / 9.1 */
+  --text-3: #948aae;         /* labels, captions, idle reel rows: 6.0 / 5.6 on elevated */
+
+  /* Hues with roles */
+  --accent: #f4c54b;         /* gold: the lit things only. Spin, payline, the set vibe, focus rings. 11.9 on surface */
+  --on-accent: #1b1405;      /* text on gold: 11.3 */
+  --state: #5fdc9b;          /* green: saved, checked. 11.2 on surface, 10.4 on elevated */
+  --on-state: #0b1a12;       /* text on green when filled */
+  --notice: #ff6e6e;         /* coral: connection and partial-failure notices. 7.1 on surface, 6.6 on elevated */
+  --estimate: #e0b35a;       /* amber: the cook-time estimate marker. 9.6 on surface, 8.9 on elevated */
+  --overlay: rgba(6, 3, 12, 0.74);
+  --glow: rgba(95, 220, 155, 0.35);  /* the saved "lamp" halo, from --state */
 
   /* Type */
-  --font-display: 'Fredoka One', 'Nunito', sans-serif;
-  --font-body: 'Nunito', sans-serif;
-
-  /* Radii */
-  --radius-card: 20px;
-  --radius-modal: 24px;
-  --radius-fav: 16px;
-  --radius-input: 12px;
-  --radius-secondary: 10px;
-  --radius-tile: 8px;
-  --radius-remove: 6px;
-  --radius-fav-img: 10px;
+  --font-display: "Bricolage Grotesque", "Archivo", system-ui, sans-serif;
+  --font-body: "Archivo", system-ui, sans-serif;
+  --size-13: 13px;
+  --size-14: 14px;
+  --size-15: 15px;
+  --size-17: 17px;           /* page body */
+  --size-18: 18px;           /* sheet body, per B */
+  --size-20: 20px;           /* dial, reel rows, spin label */
+  --size-22: 22px;           /* wordmark, section headings */
+  --size-24: 24px;           /* step numerals */
+  --size-30: 30px;           /* card title */
+  --size-34: 34px;           /* sheet title */
+  --leading-body: 1.5;
+  --leading-sheet: 1.55;
+  --leading-display: 1.05;
+  --tracking-display: -0.02em;
 
   /* Spacing */
   --space-1: 4px;
@@ -46,11 +49,29 @@
   --space-3: 8px;
   --space-4: 12px;
   --space-5: 16px;
-  --space-6: 20px;
+  --space-6: 18px;
   --space-7: 24px;
   --space-8: 32px;
+  --column: 560px;
 
-  /* Motion */
-  --ease-fast: 0.15s ease;
-  --ease: 0.2s ease;
+  /* Radius */
+  --radius-sheet: 20px;
+  --radius-card: 14px;
+  --radius-control: 12px;
+  --radius-row: 8px;
+  --radius-pill: 999px;
+
+  /* Motion. Durations are the single place to tune feel. */
+  --reel-spin: 1700ms;        /* target time from Spin to landed; Ryan tunes this one */
+  --reel-land: 900ms;         /* the decelerating final leg of the reel */
+  --reel-max: 2500ms;         /* past this, slow data skips the landing and pulses the card instead */
+  --card-tip: 260ms;          /* the card tipping away before the sheet */
+  --sheet-rise: 500ms;
+  --sheet-delay: 120ms;       /* sheet starts rising this long after the card starts tipping */
+  --overlay-fade: 300ms;
+  --save-glow: 220ms;
+  --quick: 150ms;             /* hover and toggle feedback */
+  --ease-out: cubic-bezier(0.12, 0.9, 0.25, 1);
+  --ease-overshoot: cubic-bezier(0.2, 1.1, 0.3, 1);
+  --ease-in: ease-in;
 }
