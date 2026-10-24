@@ -14,6 +14,7 @@ import { renderFavourites } from './ui/favourites';
 import { createModal } from './ui/modal';
 import { printRecipe } from './ui/print';
 import { renderRecentlyViewed } from './ui/recentlyViewed';
+import { createVibeSelector } from './ui/vibeSelector';
 import { markResultUnsaved, renderMessage, renderResult } from './ui/resultCard';
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -49,7 +50,7 @@ const mealDb = createMealDbClient();
 const lookupCache = createLookupCache(sessionCache);
 
 const ingredientsInput = byId<HTMLInputElement>('ingredients');
-const vibeSelect = byId<HTMLSelectElement>('vibe');
+const vibeSelector = createVibeSelector(byId<HTMLFieldSetElement>('vibe'), { initial: 'comfort' });
 const spinButton = byId<HTMLButtonElement>('spin-btn');
 const spinText = byId<HTMLSpanElement>('btn-text');
 const clearHistoryButton = byId<HTMLButtonElement>('clear-history-btn');
@@ -61,8 +62,8 @@ const favouritesList = byId<HTMLDivElement>('favorites-list');
 const favouritesEmpty = byId<HTMLParagraphElement>('favorites-empty');
 
 /* The idle label comes from the HTML so the two can never drift apart. */
-const SPIN_IDLE_LABEL = spinText.textContent ?? 'Spin the Pantry 🎰';
-const SPIN_BUSY_LABEL = 'Spinning... 🎰';
+const SPIN_IDLE_LABEL = spinText.textContent ?? 'Spin';
+const SPIN_BUSY_LABEL = 'Spinning';
 
 const modal = createModal(document, { onPrint: printRecipe });
 
@@ -106,7 +107,7 @@ async function spin(): Promise<void> {
     showMessage('🥄 Enter at least one ingredient');
     return;
   }
-  const vibe = vibeSelect.value;
+  const vibe = vibeSelector.value();
 
   spinInFlight = true;
   setSpinning(true);
