@@ -64,12 +64,14 @@ export function createVibeSelector(fieldset: HTMLFieldSetElement, options: VibeS
     return isVibeKey(value) ? value : initial;
   }
 
+  /* Centre the set vibe in the rail by scrolling the rail itself. scrollIntoView would also move
+     the page's focus starting point, which broke the skip link on load. */
   function centre(input: HTMLInputElement): void {
     const label = input.parentElement;
-    if (label && typeof label.scrollIntoView === 'function' && !fieldset.classList.contains('vibe-all')) {
-      const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-      label.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
-    }
+    if (!label || fieldset.classList.contains('vibe-all') || typeof rail.scrollTo !== 'function') return;
+    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const left = label.offsetLeft - (rail.clientWidth - label.offsetWidth) / 2;
+    rail.scrollTo({ left, behavior: reduce ? 'auto' : 'smooth' });
   }
 
   function setOpen(open: boolean): void {

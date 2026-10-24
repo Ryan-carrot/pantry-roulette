@@ -45,6 +45,7 @@ input[type=text]:focus-visible { outline-offset: 2px; }
   transition: transform var(--quick);
 }
 .btn-spin:active { transform: scale(0.985); }
+.btn-spin:focus-visible { outline-color: var(--text-1); }
 .btn-spin:disabled { background: var(--raised); color: var(--text-3); }
 
 /* clear seen history */

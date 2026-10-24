@@ -31,6 +31,7 @@ h1, h2, h3, .display {
 .page { max-width: var(--column); margin: 0 auto; padding: var(--space-6) var(--space-6) 80px; }
 .stack > * + * { margin-top: var(--space-5); }
 .hidden { display: none; }
+#main-content:focus { outline: none; }
 
 .section-title { font-size: var(--size-22); font-weight: 800; margin-bottom: var(--space-4); }
 .empty { color: var(--text-3); font-size: var(--size-15); }

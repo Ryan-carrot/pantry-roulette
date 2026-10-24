@@ -23,7 +23,7 @@
         <p class="tagline">Spin the wheel. Feed yourself.</p>
       </header>
 
-      <main id="main-content" class="stack">
+      <main id="main-content" class="stack" tabindex="-1">
         <noscript><p class="notice">Pantry Roulette needs JavaScript to look up recipes.</p></noscript>
 
         <label class="field" for="ingredients">
@@ -38,7 +38,7 @@
 
         <button id="spin-btn" type="button" class="btn-spin"><span id="btn-text">Spin</span></button>
 
-        <div class="reel" id="reel" aria-hidden="true">
+        <div class="reel hidden" id="reel" aria-hidden="true">
           <div class="payline"></div>
           <div class="strip" id="strip"></div>
         </div>

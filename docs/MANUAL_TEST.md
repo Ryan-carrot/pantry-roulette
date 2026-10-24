@@ -97,3 +97,84 @@
 ### Result =>
 
 - PASS: Had to input: https://www.themealdb.com/api/json/v1/1/filter.php?i=garlic exactly, and remove all asterisks or any preceding characters. Finally got the "Couldn't search for: garlic" message
+
+# Round 3 - Manual Tests (redesigned UI)
+
+Run `npm run dev` and open it on your phone over Wi-Fi (`npm run dev -- --host`), then once more in a desktop window wider than 1024px. Expected results are in brackets. Record PASS / FAIL and what you saw.
+
+## Look
+
+- Fonts: headings and the vibes on the dial should be the sharp display face (Bricolage Grotesque), body the plainer one (Archivo). [Neither should look like the system default after the page settles.]
+- The only gold things on screen before a spin: the Spin button, the notch above the dial, and the vibe you have set. [Nothing else is gold.]
+- Resize to 320px wide. [No horizontal scroll; the card title wraps; the dial still shows three vibes.]
+
+### Result =>
+
+-
+
+## The spin
+
+1. Type `chicken, onion, tomato`, leave the vibe on Comfort, tap Spin. [The reel appears under Spin and runs for about 1.7 s, decelerates, and stops with a recipe on the gold payline. The card pays out beneath it. The reel stays, showing the landed row.]
+2. Tap "Spin again" on the card. [Same, and the previous card is replaced, not stacked.]
+3. Tap Spin again immediately after a result, three or four times in a row. [Each spin runs cleanly; no card is left tipped or half-faded.]
+4. Turn on airplane mode and spin. [The reel stops and a coral line reads "Couldn't reach the recipe service..."]
+5. In DevTools → Network, throttle to "Slow 3G" and spin. [The reel keeps running while data loads. If the data takes longer than about 2.5 s, the reel stops without the decelerating landing and the card appears with a brief pulse instead.]
+
+### Result =>
+
+-
+
+## The dial
+
+1. Swipe the dial left and right. [It snaps so one vibe sits under the notch, set in gold.]
+2. Tap "See all ten". [The rail becomes a two-column grid (five columns on desktop); the set vibe is gold. Tap one: the grid closes and the dial shows it.]
+3. Keyboard: Tab to the dial, press Right arrow twice, Left arrow once. [Focus and the gold move together; it does not wrap past Lazy or Impressive.]
+
+### Result =>
+
+-
+
+## The sheet
+
+1. Tap "View recipe" on the card. [The card tips away and the sheet rises from the bottom with a small overshoot. Close is focused.]
+2. Check the meta row. [Ingredient count, cuisine, and an amber "~30–60 min · estimate" pill, or a dash if the recipe text mentions no times.]
+3. Tap three ingredient rows. [Each ticks green with a strike-through; the count reads "3 of N".]
+4. Close and reopen the same recipe. [Ticks are cleared.]
+5. Scroll to the bottom of the steps. [Save, Print and Close never leave the bottom edge.]
+6. Tap Save in the bar. [It turns green and reads "Saved"; close the sheet and the card's Save button is lit too, and the recipe is in Saved below.]
+7. Desktop: open the sheet. [It is a centred panel, not a bottom sheet, with the bar at its foot.]
+
+### Result =>
+
+-
+
+## Keyboard-only walk (no mouse)
+
+Tab from page load, then Enter / Space where noted:
+
+1. Skip link → Enter [focus lands in the main area] → Tab → ingredients field → type → Tab → "See all ten" → Tab → the set vibe → Tab → Spin → Enter.
+2. After the spin: [focus is on the result card]. Tab → View recipe → Tab → Save → Shift+Tab → Enter on View recipe.
+3. In the sheet: [Close is focused]. Tab → [first ingredient checkbox]; Space ticks it. Shift+Tab, Shift+Tab → [Close again: the trap wraps].
+4. Escape. [The sheet closes and focus is back on View recipe.]
+5. Tab to a Recently viewed thumbnail, Enter. [Sheet opens, no card tip]. Escape → [focus back on that thumbnail].
+
+### Result =>
+
+-
+
+## Reduced motion
+
+Turn on "Reduce motion" in the OS (Android: Settings → Accessibility → Remove animations; iOS: Accessibility → Motion). Reload and spin. [No reel movement: the rows appear settled when the pick lands. The card appears without tipping or sliding. The sheet appears in place.]
+
+### Result =>
+
+-
+
+## Break it on purpose
+
+1. DevTools → Application → Local Storage → set `pantryRouletteFavorites` to `garbage` and reload. [Page loads clean, Saved is empty, no console errors.]
+2. Block `https://www.themealdb.com/api/json/v1/1/filter.php?i=onion` in Network and spin `chicken, onion, tomato`. [A result appears with a coral "Couldn't search for: onion" under the card.]
+
+### Result =>
+
+-

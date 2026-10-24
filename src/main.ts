@@ -83,7 +83,8 @@ const modal = createModal(document, {
     return result;
   },
 });
-const reel = createReel(byId<HTMLDivElement>('reel'), {
+const reelRegion = byId<HTMLDivElement>('reel');
+const reel = createReel(reelRegion, {
   spinMs: motionMs('--reel-spin', 1700),
   landMs: motionMs('--reel-land', 900),
   maxMs: motionMs('--reel-max', 2500),
@@ -139,6 +140,7 @@ async function spin(): Promise<void> {
   setSpinning(true);
   resultRegion.classList.add('hidden');
   resultRegion.classList.remove('pulse', 'away');
+  reelRegion.classList.remove('hidden');
   reel.start();
 
   try {

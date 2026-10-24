@@ -18,7 +18,7 @@ Four hues with assigned roles. Gold is rationed to the things that are "lit"; th
 | `--line` | `#3a2f52` | outlines, dividers | |
 | `--text-1` | `#fbf6ff` | titles, step numerals, primary text | 18.1 on surface, 16.8 on elevated, 15.0 on raised |
 | `--text-2` | `#c9bfdd` | body, measures | 11.0 / 10.2 / 9.1 |
-| `--text-3` | `#948aae` | labels, captions, idle reel rows | 6.0 on surface, 5.6 on elevated, 4.7 on raised (large text only on raised) |
+| `--text-3` | `#948aae` | labels, captions, idle reel rows | 6.0 on surface, 5.6 on elevated, 5.0 on raised |
 | `--accent` | `#f4c54b` | gold: Spin, the payline, the set vibe, focus rings | 11.9 on surface, 11.0 on elevated |
 | `--on-accent` | `#1b1405` | text on gold | 11.3 on accent |
 | `--state` | `#5fdc9b` | green: saved, checked | 11.2 on surface, 10.4 on elevated, 9.3 on raised |
