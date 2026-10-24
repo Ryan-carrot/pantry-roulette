@@ -2,9 +2,13 @@
 
 This sandbox never ships, so nothing here is a feature to release. Each entry is an experiment to run here first, write up, and then carry into the hand-coded production app if it earns its place. Decisions are recorded in `handoff/DECISIONS.md` as they are made.
 
-## Next: redesign
+## Done: redesign
 
-The UI is still a faithful copy of v1 (navy surfaces, orange accent, Fredoka One and Nunito, pill meta row, bottom-sheet modal). The next experiment is a redesign. **The design brief comes from Ryan before any UI code is written here**; until then the UI section of `handoff/HANDCODE_SPEC.md` is a stub. What the redesign must keep, because the logic depends on it: the three meta pills (ingredients, score, vibe), the save and view actions on the result, keyboard-reachable recent cards, focus return from the modal, and the contrast ratios in the tokens.
+Three directions were mocked up (`design/mockups/`), Ryan chose C with B's sheet structure, and `src/ui/` and `src/styles/` were rebuilt against it. The system is written up in `design/SYSTEM.md` and §8 of `handoff/HANDCODE_SPEC.md`. Ryan's Round 3 manual test (`docs/MANUAL_TEST.md`) is the gate before anything else happens.
+
+## Next: Ryan's Round 3 results
+
+Whatever Round 3 turns up gets fixed first. Known unknowns: how the two Google Fonts render on Android, whether 1.7 s of reel feels right at touch latency (`--reel-spin`), and whether the card tip fights the reel on a fast "Spin again".
 
 ## Logic experiments, approved
 
@@ -12,9 +16,9 @@ The UI is still a faithful copy of v1 (navy surfaces, orange accent, Fredoka One
 
 Spin excludes seen recipes outright; the 0.3× multiplier goes away. When every candidate for the input has been seen, show a result-area message, "You've seen everything for these ingredients — clear history to start over", with the clear-history action inline. Keep the seen list cap of 20. This came out of manual testing, where the penalty made "clear history" feel like it did nothing when two recipes tied.
 
-### Cook-time range buckets
+### Done: cook-time range buckets
 
-Derive an estimate from duration phrases in the instruction text (`20 minutes`, `1 hour`, `45 mins`, `1-2 hrs`) and show it as a bucket, not a number: "under 30 min", "30 to 60 min", "over an hour". Compute from the largest single duration plus a step-count heuristic. Always label it as an estimate. Hide the pill entirely when no duration is found. One pure module in `core/`, one test file, no API change. Related production issues: #35 (hardcoded cook time), #41 (cook time filter).
+Built as `src/core/cookTime.ts` during the UI rebuild. The original plan, for the record: derive an estimate from duration phrases in the instruction text (`20 minutes`, `1 hour`, `45 mins`, `1-2 hrs`) and show it as a bucket, not a number: "under 30 min", "30 to 60 min", "over an hour". Compute from the largest single duration plus a step-count heuristic. Always label it as an estimate. Hide the pill entirely when no duration is found. One pure module in `core/`, one test file, no API change. Related production issues: #35 (hardcoded cook time), #41 (cook time filter).
 
 ### "Surprise me"
 

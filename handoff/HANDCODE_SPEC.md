@@ -508,4 +508,84 @@ npm install --save-dev vitest happy-dom
 
 ## 8. UI design
 
-To be written after the redesign experiment. See `../ROADMAP.md`: the design brief comes from Ryan before any UI code is written in the sandbox, and this section is filled in from that experiment. Until then, the behaviour items in section 5 are design-independent and can be built against the current v1 markup.
+The chosen direction is C's skeleton with B's sheet structure, rendered in C's type and colour. The reference for every value is `design/SYSTEM.md`; the tokens are `src/styles/tokens.css`; the three mockups Ryan chose from are in `design/mockups/`. Each component below: what it is, the tokens it uses, the one tricky CSS bit, and the test that proves it. Start with the tokens, then the sheet, then the reel; everything else is small.
+
+### Tokens and fonts
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it does:** One `:root` block with every colour, size, radius and motion duration. Surfaces `#100c18` / `#1a1426` / `#261d38`, line `#3a2f52`; text `#fbf6ff` / `#c9bfdd` / `#948aae`; gold `#f4c54b` with `#1b1405` on it; green `#5fdc9b`; coral `#ff6e6e`; amber `#e0b35a`. Bricolage Grotesque (700, 800, with the `opsz` axis) for anything that names something, Archivo (400, 500, 600) for anything you read. Page body 17px, sheet body 18px.
+**Original bug:** none; replaces the v1 palette and Fredoka One / Nunito (production issue #34 for the custom properties)
+**Reference:** `src/styles/tokens.css`, `design/SYSTEM.md` (colour table with ratios, type table, motion table)
+**Why it works this way:** Gold is rationed to the three things you set or press to make the machine go (Spin, the payline, the set vibe), green means on, coral means wrong, amber means estimate. Everything else is a shade of the room, so the food photo is the only saturated thing. Every motion duration is a token so feel is tuned in one place; `--reel-spin` is the one most likely to change.
+**Hand-code notes:** The Google Fonts request must include the `opsz` range for Bricolage (`Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800`) or the optical size does nothing. `font-display: swap` is in the URL (`display=swap`). Keep `--reel-max` as `2500ms` with the unit; the reel parses it with `parseFloat`.
+**Test to write:** None automated; recheck the lowest pair (text-3 on raised, 5.0:1) in a contrast tool if you change any surface.
+
+### Vibe dial
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it does:** A `<fieldset>` of ten `<input type="radio" name="vibe">`, each inside a `label.vibe-item` on a horizontal snap-scroll rail. The checked one is gold under a notch. "See all ten" turns the rail into a 2-column grid (5 on desktop) and closes again on choice.
+**Original bug:** replaces the ten-option native `<select>` (Ryan's brief: wrong control for a mood)
+**Reference:** `src/ui/vibeSelector.ts` (`createVibeSelector`), `src/styles/shell.css` (`.vibe*`)
+**Why it works this way:** Radios give you the group semantics, the single tab stop and the announcement for free, with no ARIA. The gold state is pure CSS: `.vibe-input:checked + .vibe-name`. Arrow keys are intercepted so selection does not wrap and the rail scrolls to the new item.
+**Hand-code notes:** Tokens: `--elevated`, `--line`, `--accent`, `--on-accent`, `--text-3`, `--size-20`, `--font-display`. The tricky bit: centre the set item with `rail.scrollTo({ left: label.offsetLeft - (rail.clientWidth - label.offsetWidth) / 2 })`, not `scrollIntoView`, which moves the page's sequential focus starting point and breaks the skip link on load. Rail padding is `6px calc(50% - 60px)` (half the item width) so the first and last items can reach the centre. Hide the radio over its label with `position: absolute; inset: 0; opacity: 0`, not `display: none`, or it leaves the tab order. In the arrow handler, `preventDefault()` first, then set `checked` on the neighbour, focus it and fire your change handler.
+**Test to write:** Ten radios exist; ArrowRight from Comfort selects Hearty and moves focus; ArrowLeft at Lazy stays on Lazy; "see all" toggles a class and `aria-expanded`; choosing from the grid closes it.
+
+### Spin button and reel
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it does:** A full-width gold Spin. Beneath it a 228px reel window with a gold payline on the middle row, hidden until the first spin. On Spin the reel shows skeleton rows, fills them with the filter results as they arrive, loops, then decelerates onto the pick, which the card then pays out beneath.
+**Original bug:** Ryan's brief, item one: "no sense of spin"
+**Reference:** `src/ui/reel.ts` (`createReel`: `start`, `feed`, `settle`, `cancel`), `src/styles/reel.css`, the spin flow in `src/main.ts`
+**Why it works this way:** Three timing rules make it feel like a machine and never like a hang: it never lands before `--reel-spin` (1.7 s) even when the cache answers instantly; when data is so late that landing would end after `--reel-max` (2.5 s) it skips the landing and the card pulses; under reduced motion nothing moves. The strip is 24 rows (6 candidate slots × 4 copies) so the loop is seamless and the landing row in the third copy has a row showing below it.
+**Hand-code notes:** Tokens: `--elevated`, `--line`, `--accent`, `--raised`, `--text-3`, `--text-1`, `--size-20`, `--reel-spin`, `--reel-land`, `--reel-max`, `--ease-out`. Rows are 76px in both the CSS and the JS constant; the loop keyframe moves exactly one copy (6 × 76 = 456px) per 560ms. The tricky bit is the landing: read the strip's current `translateY` from `getComputedStyle(strip).transform` (a `matrix(a,b,c,d,tx,ty)` string; `ty` is the sixth number), set it as an inline transform with `transition: none`, force a reflow (`void strip.offsetHeight`), then set the final offset `-(16 × 76)px` with `transition: transform 900ms var(--ease-out)`. Keep the reel `aria-hidden`; the result region is the live region. Reading the three durations from `getComputedStyle(document.documentElement).getPropertyValue('--reel-spin')` with `parseFloat` keeps the timing in CSS.
+**Test to write:** With fake timers: a settle called at once resolves only after 1.7 s with `'landed'`; a settle at 2.0 s resolves immediately with `'pulsed'`; under reduced motion it resolves with `'instant'` and the `spinning` class is never set.
+
+### Result card and the Save lamp
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it does:** `article.card`: 16:9 image, title at 30 in the display face, description, three pills ("4 of 16 ingredients", "62% score", "71% comfort"), a grid of gold "View recipe" and the Save lamp, a ghost "Spin again", and an optional coral "Couldn't search for: ..." line beneath. Save is a quiet ghost button that lights green with a halo when saved and stays lit if the recipe was already saved.
+**Original bug:** BUGS_RESOLVED #3, #7, #9, #11 all still hold; this is their new skin
+**Reference:** `src/ui/resultCard.ts` (`renderResult`, `renderMessage`, `markResultSaved`, `markResultUnsaved`), `src/styles/result.css`
+**Why it works this way:** The card is a stepping stone to the sheet, so it stays plain; the one memorable thing on it is the lamp. `aria-pressed` drives both the visual and the announced state, so there is one source of truth for "saved".
+**Hand-code notes:** Tokens: `--elevated`, `--line`, `--raised`, `--accent`, `--on-accent`, `--state`, `--glow`, `--notice`, `--size-30`, `--save-glow`, `--card-tip`, `--ease-in`. The lamp is `box-shadow: 0 0 0 1px var(--state), 0 0 18px var(--glow)` with the heart's `fill: currentColor`; never `filter: blur`, which repaints the whole layer for the length of the transition. The tricky bit: the card's `transition` must list only `transform` and `opacity` so the `.away` tip (used when the sheet opens) and the `payout` arrival keyframe do not fight. `transform-origin: 50% 0` makes the tip hinge at the top.
+**Test to write:** Renders name, image, description and the three pills from a `ScoredRecipe`; a name containing `<b>` renders as text; `onSave` returning `'added'` lights the lamp, `'exists'` renders it lit, `'full'` leaves it unlit and shows the note.
+
+### Recipe sheet
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it does:** The star. A bottom sheet (a centred panel at ≥1024px) that is a flex column: a scrolling body (image, category eyebrow, title at 34, a meta row of ingredient count, cuisine and the cook-time estimate or a dash, checkable ingredient rows with a running "3 of 16", steps at 18px with disc numerals, a status line) and a bar pinned at the bottom with Save, Print and Close, 60px tall. Opening it from the card tips the card away as the sheet rises with a small overshoot.
+**Original bug:** BUGS_RESOLVED #5, #17 hold; structure is B's, from Ryan's brief ("everything I need is right there")
+**Reference:** `src/ui/modal.ts` (`createModal` → `open(recipe, trigger, { tip })`, `close`), `src/styles/sheet.css`
+**Why it works this way:** Ticks live only while the sheet is open (what is in the pan right now). The bar is a flex footer, not `position: sticky`, because sticky inside an overflow container misbehaves across mobile browsers. Focus goes to Close on open and back to the trigger on every close path; the trap now spans the checkboxes and the bar.
+**Hand-code notes:** Tokens: `--elevated`, `--raised`, `--line`, `--text-1/2/3`, `--state`, `--on-state`, `--estimate`, `--size-18`, `--size-34`, `--leading-sheet`, `--radius-sheet`, `--sheet-rise`, `--sheet-delay`, `--ease-overshoot`, `--overlay`. The tricky bit is the scroll: `.sheet { display: flex; flex-direction: column; max-height: 94vh }` and `.sheet-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto }`. Without `min-height: 0` the body refuses to shrink and pushes the bar off screen. The rise is a `transform` transition with the delay in the shorthand; remove `.hidden` (display none) and add `.open` on the next animation frame, or the transition never runs. The checkbox is `appearance: none` with a drawn tick (`::after`, a rotated two-sided border) in `--on-state`. Ingredient rows are a `28px 96px 1fr` grid inside a `<label>` with `min-height: 52px`. `padding-bottom: env(safe-area-inset-bottom)` on the bar clears the iPhone home indicator.
+**Test to write:** Fill from a recipe; meta row shows count, cuisine and a dash when `cookTime` is null; two ticks give "2 of 3" and reopening clears them; the bar's three buttons follow the content in document order; focus returns to the trigger after close button, Escape and backdrop; Tab from Close wraps to the first checkbox; opening with `{ tip }` adds `.away` to that element and close removes it.
+
+### Saved cards and recently viewed
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it does:** Saved cards: 84px thumbnail, title with a lit green lamp dot, two-line description, "View recipe", a remove button. Recently viewed: a strip of 100px buttons.
+**Original bug:** BUGS_RESOLVED #4, #18 hold
+**Reference:** `src/ui/favourites.ts`, `src/ui/recentlyViewed.ts`, `src/styles/favourites.css`, `src/styles/recently.css`
+**Why it works this way:** The lamp on a saved card is always on; it is in the list because it is saved. Remove still reads `currentTarget.dataset.key`.
+**Hand-code notes:** Tokens: `--elevated`, `--raised`, `--line`, `--state`, `--glow`, `--notice` (remove hover), `--accent` (recent thumbnail border on hover and focus). The tricky bit: the recent buttons need `font: inherit; padding: 0; letter-spacing: normal` because the global `button` style is the gold Spin. The two-line clamp is `display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden`.
+**Test to write:** The card for a saved recipe contains `.lamp`; clicking the SVG inside the second remove button calls `onRemove` with the second key; recent cards are `button` elements.
+
+### Notices, clear history, footer
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it does:** `.notice` is coral text, used for the connection failure, the "couldn't load" case and the partial-failure line; nothing else is coral. "Clear seen history" is a text button with an icon, a hint, and a two-second "History cleared" swap of the text span. The footer is text-3 with underlined links; the Fazier badge is gone.
+**Original bug:** BUGS_RESOLVED #15, #21 hold
+**Reference:** `src/styles/base.css` (`.notice`), `src/styles/shell.css` (`.history`, `.btn-text`), `src/styles/footer.css`
+**Why it works this way:** If coral only ever means "something went wrong", the user learns it in one spin.
+**Hand-code notes:** Tokens: `--notice`, `--text-2`, `--text-3`, `--line`, `--size-15`, `--size-14`.
+**Test to write:** `renderMessage(container, text, 'notice')` renders `.message.notice`; the plain kind does not.
+
+### Motion and reduced motion
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it does:** The motion table in `design/SYSTEM.md`: reel loop and landing, card pay-out, card tip, sheet rise with delay, overlay fade, save glow, hover feedback, each with its reduced-motion fallback.
+**Original bug:** BUGS_RESOLVED #22 era `prefers-reduced-motion` (production issue #36)
+**Reference:** `src/styles/motion.css` and the `@media (prefers-reduced-motion: reduce)` block at the end of each component file
+**Why it works this way:** Each component owns its own fallback next to the rule it cancels, so a future animation cannot be forgotten by a global `* { animation: none }`. The reel also checks `matchMedia` in JS so no timers run under reduced motion.
+**Hand-code notes:** Under reduced motion the card tip becomes a 40% dim with no rotation; the reel sets no `spinning` class and the strip jumps to its final offset.
+**Test to write:** The reel test with `reduceMotion: true` resolves `'instant'` and never sets `spinning`.

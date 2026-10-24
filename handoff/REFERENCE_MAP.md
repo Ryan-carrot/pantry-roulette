@@ -21,23 +21,23 @@ Where each production (v1.0.1, `ed443d1`) file or function went in the sandbox. 
 | `getRecentlyViewed()` | 145–148 | `src/storage/recentlyViewed.ts`: `createRecentlyViewedStore(storage).list()` |
 | `addRecentlyViewed(recipe)` | 150–157 | `createRecentlyViewedStore(storage).add()` |
 | unguarded `JSON.parse(localStorage.getItem(key))` | 104, 130, 147 | `src/storage/storage.ts`: `readJson()`, `readArray()`, `writeJson()`; shape validation in `src/storage/recipeCodec.ts`: `toRecipe()`, `toStoredRecipe()`, `readRecipes()` |
-| `openRecipeModal(recipe)` | 166–225 | `src/ui/modal.ts`: `createModal(document, { onPrint }).open(recipe, trigger)` |
+| `openRecipeModal(recipe)` | 166–225 | `src/ui/modal.ts`: `createModal(document, { onPrint, isSaved, onSave }).open(recipe, trigger, { tip })` (B's structure: checkable ingredients, pinned Save / Print / Close bar) |
 | `closeRecipeModal()` | 227–232 | `createModal(...).close()` (returns focus to the trigger) |
 | `trapFocus(element)` / `removeFocusTrap()` | 237–268 | `src/ui/modal.ts`: `trapTab()` keydown listener inside `createModal` |
 | print button handler (`window.open` + `document.write`) | 271–408 | `src/ui/print.ts`: `printRecipe()` (null guard, `afterprint` close) and `buildPrintDocument()`; CSS in `src/styles/print.css` |
 | close button, backdrop click, Escape listeners | 410–430 | wired inside `createModal()` |
 | `renderFavorites()` | 431–491 | `src/ui/favourites.ts`: `renderFavourites(list, empty, favourites, { onView, onRemove })` |
 | remove-button handler (`e.target.closest("remove-btn")`) | 467–483 | `renderFavourites` listener using `event.currentTarget.dataset.key`; save-button reset via `src/ui/resultCard.ts`: `markResultUnsaved()` |
-| `renderRecentlyViewed()` | 493–523 | `src/ui/recentlyViewed.ts`: `renderRecentlyViewed(section, list, recent, { onView })` (cards are `<button>`s) |
+| `renderRecentlyViewed()` | 493–523 | `src/ui/recentlyViewed.ts`: `renderRecentlyViewed(section, list, recent, { onView })` (a strip of `<button>`s) |
 | spin click handler | 526–657 | `src/main.ts`: `spin()` |
 | input parsing (`split(",").map(trim).map(toLowerCase)`) | 540 | `src/core/scoring.ts`: `parseIngredients()` (also drops blanks and duplicates) |
-| spinning state (`.spinning`, "Spinning... 🎰") | 536–538, 549–550 | `src/main.ts`: `setSpinning()` (also sets `disabled`) and `spinInFlight` |
+| spinning state (`.spinning`, "Spinning... 🎰") | 536–538, 549–550 | `src/main.ts`: `setSpinning()` (also sets `disabled`) and `spinInFlight`; the visible spin is `src/ui/reel.ts`: `createReel().start() / feed() / settle()` |
 | empty guards and messages ("🥄", "😬 Nothing found") | 530–533, 552–556 | `src/main.ts`: the four `showMessage()` branches; `src/ui/resultCard.ts`: `renderMessage()` |
 | `console.log("Raw meals pool:", ...)` | 547 | Removed |
 | inline scoring (`matched`, `ingredientScore`, `combinedScore`, seen `× 0.3`) | 571–585 | `src/core/scoring.ts`: `scoreRecipe()` → `ScoredRecipe` |
 | `.filter(score > 0).sort(...)` | 586–591 | `src/core/scoring.ts`: `rankRecipes()` with `compareScored()` |
 | `scored[0]` or random fallback | 593–597 | `src/core/scoring.ts`: `pickRecipe()` (returns `null` on empty pool; RNG injected) |
-| result card template literal → `resultDiv.innerHTML` | 605–635 | `src/ui/resultCard.ts`: `renderResult(container, scored, { isSaved, onSave, onView, failedIngredients })` |
+| result card template literal → `resultDiv.innerHTML` | 605–635 | `src/ui/resultCard.ts`: `renderResult(container, scored, { isSaved, vibeLabel, onSave, onView, onSpinAgain, failedIngredients })` |
 | save-button click (`"Saved! ✅"`) | 643–650 | `renderResult`'s save listener and `setSavedState()` |
 | view-recipe-button click | 653–655 | `renderResult`'s `onView(trigger)` → `main.ts`: `openRecipe()` |
 | page-load `renderFavorites(); renderRecentlyViewed();` | 660–662 | `src/main.ts`: `refreshFavourites()`, `refreshRecentlyViewed()` |
@@ -66,11 +66,12 @@ Where each production (v1.0.1, `ed443d1`) file or function went in the sandbox. 
 |---|---|
 | `<script src="vibes.js">`, `recipes.js`, `app.js` | `<script type="module" src="/src/main.ts">` |
 | `<meta property="og:*">`, `twitter:*` | Removed (sandbox is not a public site) |
-| `#result` static div (gets `tabindex="-1"` from JS) | same markup with `tabindex="-1"` in the HTML |
+| `#result` static div (gets `tabindex="-1"` from JS) | same markup with `tabindex="-1"` in the HTML; `#reel` sits above it |
 | `#reset-seen-btn` "Reset Suggestions" | `#clear-history-btn` "Clear seen history" with `#clear-history-text` span and `#clear-history-hint` |
+| (none) | `.sheet-bar` with `#modal-save-btn`, `#modal-print-btn`, `#modal-close-btn` pinned to the sheet's bottom edge |
 | `#btn-text` "Spin the Pantry" (JS adds 🎰 later) | `#btn-text` "Spin the Pantry 🎰" (JS reads it back) |
-| `.modal-meta` with static `<span class="meta-time">30 mins</span>` | `#modal-meta`, filled by JS with ingredient count and cuisine |
-| `<select id="vibe" aria-label="Select a cooking vibe">` | `<select id="vibe">` (visible label is the name) |
+| `.modal-meta` with static `<span class="meta-time">30 mins</span>` | `#modal-meta`, filled by JS with ingredient count, cuisine and the cook-time bucket from `src/core/cookTime.ts`: `estimateCookTime()` (a dash when null) |
+| `<select id="vibe" aria-label="Select a cooking vibe">` | `<fieldset id="vibe">` filled by `src/ui/vibeSelector.ts`: `createVibeSelector()`, ten radios on a snap-scroll rail with a "see all" grid |
 | `#recipe-modal` with `aria-describedby="modal-body"` | without `aria-describedby` |
 | (none) | `#modal-status` (`role="status"`) for the blocked-print message; `<noscript>` line; Google Fonts `preconnect` |
 | `favicon*.png`, `favicon.ico`, `apple-touch-icon.png` at root | `public/` (same files, served from `/`) |
@@ -78,19 +79,22 @@ Where each production (v1.0.1, `ed443d1`) file or function went in the sandbox. 
 
 ## `style.css`
 
+The v1 stylesheet maps onto the new token-driven files. `design/SYSTEM.md` is the human reference for all of them.
+
 | Production | Sandbox |
 |---|---|
-| literal colours (21 × `#ff6b35`, 11 × `#0f3460`, ...) | `src/styles/tokens.css` custom properties |
+| literal colours (21 × `#ff6b35`, 11 × `#0f3460`, ...) | `src/styles/tokens.css`: every colour, size, radius and motion value |
 | reset, body, `.container`, `.hidden`, `.skip-link`, icon alignment | `src/styles/base.css` |
-| `.hero`, `.subtitle` | `src/styles/hero.css` |
-| `.input-group`, `input`, `select`, `button`, `.reset-btn` | `src/styles/form.css` (plus `.clear-history`) |
-| `.result-card`, `.meta`, `.meta-*::before` emoji, `.save-btn`, `.view-recipe-btn`, `.no-match` | `src/styles/result.css` (plus `.save-note`, `.search-note`; `.meta-time` removed, `.meta-score` and `.meta-area` added) |
-| `.favorites-*`, `.fav-card`, `.remove-btn` (+ the "targeted fixes" block) | `src/styles/favourites.css` (fixes folded in) |
-| `.recently-viewed-*`, `.recent-card` | `src/styles/recently.css` (`.recent-card` has button resets) |
-| `.modal-*`, `.modal-ingredients-list`, `.modal-steps-list` | `src/styles/modal.css` (plus `.modal-status`) |
-| `.site-footer`, `.footer-badges` | `src/styles/footer.css` |
-| `@keyframes pulse`, `slideUp`, `fadeIn` | `src/styles/motion.css` (plus `prefers-reduced-motion`) |
-| `@media (max-width: 600px)`, `400px`, `320px` ×2 | `src/styles/responsive.css` (each once) |
+| `.hero`, `.subtitle` | `src/styles/shell.css` (`.wordmark`, `.tagline`) |
+| `.input-group`, `input`, `select`, `button`, `.reset-btn` | `src/styles/shell.css` (field, dial, `.btn-spin`, `.btn-text`) |
+| (none) | `src/styles/reel.css` |
+| `.result-card`, `.meta`, `.meta-*::before` emoji, `.save-btn`, `.view-recipe-btn`, `.no-match` | `src/styles/result.css` (`.card`, `.pill`, `.btn-primary`, `.btn-save` lamp, `.message`, `.search-note`; no emoji) |
+| `.modal-*`, `.modal-ingredients-list`, `.modal-steps-list` | `src/styles/sheet.css` (`.sheet`, `.ingredient` rows with `.tick`, `.steps`, `.sheet-bar`) |
+| `.favorites-*`, `.fav-card`, `.remove-btn` (+ the "targeted fixes" block) | `src/styles/favourites.css` (`.fav`, `.lamp`) |
+| `.recently-viewed-*`, `.recent-card` | `src/styles/recently.css` |
+| `.site-footer`, `.footer-badges` | `src/styles/footer.css` (badge removed) |
+| `@keyframes pulse`, `slideUp`, `fadeIn` | `src/styles/motion.css` (`rise`, `pulse`) plus per-component keyframes (`payout`, `reel-loop`) and reduced-motion fallbacks |
+| `@media (max-width: 600px)`, `400px`, `320px` ×2 | per-component `@media (max-width: 360px)` and `(min-width: 720px / 1024px)` blocks |
 | print CSS inside `app.js`'s template literal | `src/styles/print.css` |
 | `.remove-btn svg { pointer-events: none }` | Removed (handler uses `currentTarget`) |
 
@@ -108,3 +112,9 @@ Where each production (v1.0.1, `ed443d1`) file or function went in the sandbox. 
 | `tests/storage.test.ts` | guarded parse, v1 upgrade, caps, id identity, legacy names |
 | `tests/ui.test.ts` | `el()` never parses HTML, card labels, remove via icon, modal focus paths, print builder |
 | `tests/clearHistory.test.ts` | label swap and restore, icon kept |
+| `tests/vibeSelector.test.ts` | ten radios, arrow keys without wrap, see-all toggle, value read-back |
+| `tests/reel.test.ts` | skeleton then fill, never lands early, holds for slow data, pulses past the max, reduced motion, cancel |
+| `tests/resultCard.test.ts` | fields, no markup, save lamp states incl. full, view and spin again, failure notice, messages |
+| `tests/modal.test.ts` | fill, meta row with dash, ticks and reset, bar order, focus return on three paths, trap, save from bar, blocked print, card tip |
+| `tests/favourites.test.ts`, `tests/recentlyViewed.test.ts` | lamp, remove by key incl. legacy, view trigger; strip of buttons |
+| `tests/cookTime.test.ts` | durations, ranges, overnight, buckets, max not sum, step heuristic, codec |

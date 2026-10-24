@@ -96,3 +96,26 @@ Every design decision made during the rebuild, one per line, with the reasoning.
 - **Tests before code for every behavioural change**, and the project suite run before every commit. One slip (a commit made while another item's test was red) was reset and recommitted in the right order.
 - **Pure modules tested with plain data; fetch and storage injected.** No mocking library, no network, no real `localStorage`.
 - **Headless smoke script in the scratchpad, not the repo.** Drove the built site through spins, keyboard paths, print, corrupt storage and breakpoints. Not committed because it depends on a locally installed Chromium and is not part of the deliverable.
+
+## UI rebuild against the chosen design (`src/ui/*`, `src/styles/*`, `index.html`)
+
+- **C's skeleton, B's sheet structure, nothing from A** (Ryan's decision after phone-testing `design/mockups/`). B's structure is rendered in C's type and colour: the 18px sheet body and the density carry over; IBM Plex Sans and the cool greys do not.
+- **Every motion value is a token** (`--reel-spin`, `--reel-land`, `--reel-max`, `--card-tip`, `--sheet-rise`, `--sheet-delay`, `--save-glow`, `--quick`) and the reel reads them from `getComputedStyle` at startup, so timing is tuned in `tokens.css` alone.
+- **An amber `--estimate` token for the cook-time pill**, not coral. The brief said "amber-adjacent warning token"; C's only warning colour is coral, and coral on an estimate reads as an error. Amber at 9.9:1 on surface is a fourth hue with one job.
+- **The dial is a fieldset of radio inputs**, not buttons with ARIA. Radios give the group semantics, the checked tab stop and screen-reader announcement for free; the label's `:checked + span` carries the gold state. Arrow keys are intercepted with `preventDefault` so the browser's own stepping does not double-move, and selection does not wrap at the ends.
+- **The dial centres its set item with `rail.scrollTo`, never `scrollIntoView`.** `scrollIntoView` on load moved the page's focus starting point past the skip link and the input (found by the headless keyboard walk).
+- **The reel never lands before `--reel-spin`**, even when the pick is instant, so a fast cache hit still feels like a spin. **Past `--reel-max` it skips the landing** and reports `'pulsed'` so the card pulses instead; a 4 s spin would feel like a hang. **Reduced motion means no reel movement at all.**
+- **The reel is hidden until the first spin.** An empty 228px window with a payline before any spin was the first thing on the page and said nothing.
+- **The reel's landing freezes the loop by reading the computed `matrix()`** and continues from there, so the deceleration is continuous with the loop.
+- **Reel rows are built from the filter stubs** (name and thumbnail arrive before details), so the reel shows real candidates while the lookups load.
+- **The Save lamp is `aria-pressed` plus `box-shadow`**, no `filter: blur`. Blur repaints the layer every frame of the glow transition; a shadow does not.
+- **The saved card's lamp is always lit.** It is in the Saved list, so it is saved; the dot says so without a second toggle.
+- **Ticks in the sheet live only while it is open.** Persisting them would need a key per recipe and a reset affordance; for "what have I added to the pan" the open session is the right lifetime.
+- **Save, Print, Close are a flex-column footer, not `position: sticky`.** The sheet is a fixed flex column with `min-height: 0` on the scroll area; sticky inside an overflow container behaves differently across mobile browsers.
+- **The sheet becomes a centred panel at 1024px** (the brief) rather than 720px (the mockup).
+- **The card tip is applied to the result region, passed in by the caller**, so opening the sheet from a saved or recent card tips nothing.
+- **Cook time: largest single duration plus three minutes per step**, bucketed; never a number. Ranges take the larger end, "overnight" is 12 hours, "half an hour" is 30. No duration at all gives null and the sheet shows a dash rather than a guess.
+- **The estimate is derived in `normalizeMeal` and carried by the storage codec**, so it is cached with the recipe and v1 entries read back as null.
+- **`main` has `tabindex="-1"`** so the skip link actually moves focus in every browser.
+- **Emoji are gone.** Messages are plain text; failures are coral.
+- **Out of scope and not built**: Surprise Me, exclusion instead of penalty, servings scaling, equipment inference, a real logo.

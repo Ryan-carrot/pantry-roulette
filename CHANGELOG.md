@@ -2,6 +2,19 @@
 
 > Versions here are informal and nothing in this directory was ever released. This file is a record of what was built in the sandbox and why, kept so the reasoning survives. The v1.0.x entries at the bottom describe the production app this rebuild started from.
 
+## UI rebuild against the chosen design (sandbox, late October 2026)
+
+Ryan phone-tested three mockup directions (`design/mockups/`) and chose C as the skeleton with B's recipe sheet structure. `src/ui/`, `src/styles/` and `index.html` were rebuilt against it; `core/`, `api/` and `storage/` are unchanged except for the cook-time estimator.
+
+- Tokens: aubergine-black surfaces, one gold accent rationed to the lit things, green for saved and checked, coral for notices, amber for the estimate. Bricolage Grotesque for anything that names something, Archivo for anything you read, 18px in the sheet. All motion durations are tokens; `--reel-spin` is the one to tune.
+- The vibe dial replaces the dropdown: ten radios on a snap-scroll rail, the set one in gold, with a "see all" grid. Native keyboard semantics.
+- The spin is a visible reel that runs while candidates load and decelerates onto the pick. It never lands early; past 2.5 s it skips the landing and the card pulses.
+- The result card is the pay-out: pills, "View recipe", a Save lamp that lights green with a halo, "Spin again".
+- The recipe sheet has B's structure: checkable ingredients with a count, 18px steps with disc numerals, and Save / Print / Close pinned to the bottom edge. Opening it from the card tips the card away.
+- Cook-time estimate buckets from the instruction text, shown as "~30–60 min · estimate" or a dash.
+- Emoji are gone; coral notices replace them for failures.
+- 162 tests (was 132): dial, reel, card, sheet, saved, recent, estimator.
+
 ## Rebuild (sandbox, October 2026)
 
 Full rebuild of the production app in TypeScript with tests. Same product, UX, visual identity and vibe engine semantics; new foundations. Everything listed below is reference material for the hand-coded production build, not a shipped release.
