@@ -1,0 +1,67 @@
+/* the recipe sheet: B's structure (density, 18px body, pinned bar) in C's type and colour */
+.overlay { position: fixed; inset: 0; background: var(--overlay); opacity: 0; pointer-events: none; transition: opacity var(--overlay-fade) ease; z-index: 20; }
+.overlay.on { opacity: 1; pointer-events: auto; }
+
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  max-height: 94vh; display: flex; flex-direction: column;
+  background: var(--elevated); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  transform: translateY(104%);
+  transition: transform var(--sheet-rise) var(--ease-overshoot) var(--sheet-delay);
+}
+.sheet.hidden { display: none; }
+.sheet.open { transform: none; }
+.sheet-scroll { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+.sheet-media { height: min(58vw, 240px); overflow: hidden; border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; background: var(--raised); }
+.sheet-media img { width: 100%; height: 100%; object-fit: cover; }
+.sheet-img.hidden { display: none; }
+.sheet-body { padding: var(--space-6) var(--space-6) var(--space-7); font-size: var(--size-18); line-height: var(--leading-sheet); }
+.eyebrow { color: var(--text-3); font-size: var(--size-14); margin-bottom: var(--space-2); }
+.eyebrow:empty { display: none; }
+.sheet-title { font-size: var(--size-34); margin-bottom: var(--space-4); font-variation-settings: "opsz" 96; }
+.sheet-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); padding-bottom: var(--space-4); border-bottom: 1px solid var(--line); margin-bottom: var(--space-4); }
+.meta-item { background: var(--raised); border-radius: var(--radius-pill); padding: 6px 12px; font-size: var(--size-14); color: var(--text-1); }
+.meta-item.meta-estimate { color: var(--estimate); }
+.meta-item.meta-none { color: var(--text-3); }
+.sheet-heading { font-size: var(--size-22); font-weight: 800; margin: var(--space-6) 0 var(--space-3); display: flex; justify-content: space-between; align-items: baseline; }
+.sheet-count { font-family: var(--font-body); font-weight: 400; font-size: var(--size-14); color: var(--text-3); }
+
+/* checkable ingredients: tap the row to tick it off; ticks live only while the sheet is open */
+.ingredients { list-style: none; }
+.ingredients li { border-top: 1px solid var(--line); }
+.ingredient { display: grid; grid-template-columns: 28px 96px 1fr; gap: var(--space-4); align-items: center; padding: 12px 0; min-height: 52px; cursor: pointer; }
+.tick { appearance: none; width: 26px; height: 26px; margin: 0; border: 2px solid var(--text-3); border-radius: 6px; display: grid; place-items: center; cursor: pointer; background: transparent; }
+.tick::after { content: ""; width: 12px; height: 7px; border: 2.5px solid var(--on-state); border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px); opacity: 0; }
+.tick:checked { background: var(--state); border-color: var(--state); }
+.tick:checked::after { opacity: 1; }
+.measure { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.name { color: var(--text-1); }
+.tick:checked ~ .measure, .tick:checked ~ .name { color: var(--text-3); text-decoration: line-through; }
+
+/* steps: big display numerals you can find again after looking at the pan */
+.steps { list-style: none; counter-reset: step; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 40px 1fr; gap: var(--space-4); padding: 14px 0; border-top: 1px solid var(--line); }
+.steps li::before { content: counter(step); width: 36px; height: 36px; border-radius: 50%; background: var(--text-1); color: var(--surface); font-family: var(--font-display); font-weight: 800; font-size: var(--size-20); display: grid; place-items: center; }
+.steps p { color: var(--text-1); }
+.sheet-status { color: var(--text-3); font-size: var(--size-14); text-align: center; margin-top: var(--space-4); }
+.sheet-status:empty { display: none; }
+
+/* the pinned bar: Save, Print, Close in thumb reach; never scrolls away */
+.sheet-bar { flex: none; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--line); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+.bar-btn { background: var(--elevated); color: var(--text-1); min-height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: var(--size-14); font-weight: 500; transition: color var(--save-glow); }
+.bar-btn:focus-visible { outline-offset: -3px; }
+.bar-btn[aria-pressed=true] { color: var(--state); text-shadow: 0 0 12px var(--glow); }
+.bar-btn[aria-pressed=true] svg { fill: currentColor; }
+
+@media (min-width: 1024px) {
+  .sheet { left: 50%; right: auto; bottom: auto; top: 50%; width: min(640px, 92vw); max-height: 88vh; border-radius: var(--radius-sheet); transform: translate(-50%, -44%); opacity: 0; transition: transform var(--sheet-rise) var(--ease-overshoot) var(--sheet-delay), opacity var(--overlay-fade) ease var(--sheet-delay); }
+  .sheet.open { transform: translate(-50%, -50%); opacity: 1; }
+  .sheet-bar { border-radius: 0 0 var(--radius-sheet) var(--radius-sheet); overflow: hidden; }
+}
+@media (max-width: 360px) {
+  .ingredient { grid-template-columns: 28px 84px 1fr; }
+  .sheet-title { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay, .sheet, .bar-btn { transition: none; }
+}

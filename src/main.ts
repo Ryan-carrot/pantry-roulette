@@ -2,6 +2,7 @@ import './styles/index.css';
 
 import { loadRecipes } from './api/loadRecipes';
 import { createMealDbClient, findCandidates } from './api/mealdb';
+import { recipeKey } from './core/identity';
 import { parseIngredients, pickRecipe } from './core/scoring';
 import { createFavouritesStore } from './storage/favourites';
 import { createLookupCache } from './storage/lookupCache';
@@ -16,7 +17,7 @@ import { printRecipe } from './ui/print';
 import { renderRecentlyViewed } from './ui/recentlyViewed';
 import { createReel } from './ui/reel';
 import { createVibeSelector } from './ui/vibeSelector';
-import { markResultUnsaved, renderMessage, renderResult } from './ui/resultCard';
+import { markResultSaved, markResultUnsaved, renderMessage, renderResult } from './ui/resultCard';
 
 /** Read a motion duration token so the reel's timing is tuned in tokens.css, not here. */
 function motionMs(token: string, fallback: number): number {
@@ -73,7 +74,15 @@ const favouritesEmpty = byId<HTMLParagraphElement>('favorites-empty');
 const SPIN_IDLE_LABEL = spinText.textContent ?? 'Spin';
 const SPIN_BUSY_LABEL = 'Spinning';
 
-const modal = createModal(document, { onPrint: printRecipe });
+const modal = createModal(document, {
+  onPrint: printRecipe,
+  isSaved: (recipe) => favourites.has(recipe),
+  onSave(recipe) {
+    const result = favourites.add(recipe);
+    if (result === 'added') { refreshFavourites(); markResultSaved(resultRegion, recipeKey(recipe)); }
+    return result;
+  },
+});
 const reel = createReel(byId<HTMLDivElement>('reel'), {
   spinMs: motionMs('--reel-spin', 1700),
   landMs: motionMs('--reel-land', 900),
@@ -81,8 +90,10 @@ const reel = createReel(byId<HTMLDivElement>('reel'), {
   reduceMotion,
 });
 
+/** Open the sheet. When opened from the result card, the card tips away behind it. */
 function openRecipe(recipe: Recipe, trigger: HTMLElement): void {
-  modal.open(recipe, trigger);
+  const fromCard = resultRegion.contains(trigger);
+  modal.open(recipe, trigger, fromCard ? { tip: resultRegion } : {});
 }
 
 function refreshFavourites(): void {

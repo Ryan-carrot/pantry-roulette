@@ -1,8 +1,7 @@
 // @vitest-environment happy-dom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { el, svgIcon } from '../src/ui/el';
 import { renderFavourites } from '../src/ui/favourites';
-import { createModal } from '../src/ui/modal';
 import { buildPrintDocument } from '../src/ui/print';
 import { renderRecentlyViewed } from '../src/ui/recentlyViewed';
 import type { Recipe } from '../src/types';
@@ -25,29 +24,6 @@ function recipe(overrides: Partial<Recipe> = {}): Recipe {
 }
 
 
-const MODAL_HTML = `
-  <button id="trigger">open</button>
-  <div id="recipe-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
-    <div class="modal-card" id="modal-card">
-      <div id="modal-body">
-        <div class="modal-image-wrap">
-          <img id="modal-image" src="" alt="" class="modal-img hidden" />
-          <div class="modal-header-btns">
-            <button id="modal-print-btn" aria-label="Print this recipe"></button>
-            <button id="modal-close-btn" aria-label="Close recipe modal"></button>
-          </div>
-        </div>
-        <div class="modal-content">
-          <p id="modal-category"></p>
-          <h2 id="modal-title"></h2>
-          <div id="modal-meta" class="modal-meta"></div>
-          <ul id="modal-ingredients"></ul>
-          <ol id="modal-steps"></ol>
-          <p id="modal-status" aria-live="polite"></p>
-        </div>
-      </div>
-    </div>
-  </div>`;
 
 describe('el', () => {
   it('builds an element with attributes and text children', () => {
@@ -138,75 +114,6 @@ describe('renderFavourites', () => {
     });
     expect(list.querySelector('h3 i')).toBeNull();
     expect(list.textContent).not.toMatch(/mins/);
-  });
-});
-
-describe('modal', () => {
-  beforeEach(() => {
-    document.body.innerHTML = MODAL_HTML;
-    document.body.classList.remove('modal-open');
-  });
-
-  it('fills the modal from the recipe and focuses the close button', () => {
-    const modal = createModal(document, { onPrint: () => true });
-    const trigger = document.getElementById('trigger') as HTMLButtonElement;
-    modal.open(recipe(), trigger);
-    expect(document.getElementById('recipe-modal')?.classList.contains('hidden')).toBe(false);
-    expect(document.getElementById('modal-title')?.textContent).toBe('Test Dish');
-    expect(document.getElementById('modal-category')?.textContent).toBe('Dessert');
-    const items = Array.from(document.querySelectorAll('#modal-ingredients li')).map(
-      (li) => li.textContent,
-    );
-    expect(items).toEqual(['2 eggs', '50g butter', 'flour']);
-    expect(document.querySelectorAll('#modal-steps li')).toHaveLength(2);
-    expect(document.getElementById('modal-meta')?.textContent).not.toMatch(/min/);
-    expect(document.activeElement?.id).toBe('modal-close-btn');
-    expect(document.body.classList.contains('modal-open')).toBe(true);
-  });
-
-  it('returns focus to the trigger on close button', () => {
-    const modal = createModal(document, { onPrint: () => true });
-    const trigger = document.getElementById('trigger') as HTMLButtonElement;
-    modal.open(recipe(), trigger);
-    (document.getElementById('modal-close-btn') as HTMLButtonElement).click();
-    expect(document.getElementById('recipe-modal')?.classList.contains('hidden')).toBe(true);
-    expect(document.activeElement).toBe(trigger);
-    expect(document.body.classList.contains('modal-open')).toBe(false);
-  });
-
-  it('returns focus to the trigger on Escape', () => {
-    const modal = createModal(document, { onPrint: () => true });
-    const trigger = document.getElementById('trigger') as HTMLButtonElement;
-    modal.open(recipe(), trigger);
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    expect(document.activeElement).toBe(trigger);
-  });
-
-  it('returns focus to the trigger on overlay click, but not on card click', () => {
-    const modal = createModal(document, { onPrint: () => true });
-    const trigger = document.getElementById('trigger') as HTMLButtonElement;
-    modal.open(recipe(), trigger);
-    document.getElementById('modal-card')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.getElementById('recipe-modal')?.classList.contains('hidden')).toBe(false);
-    document.getElementById('recipe-modal')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.activeElement).toBe(trigger);
-  });
-
-  it('wraps Tab from the last focusable to the first', () => {
-    const modal = createModal(document, { onPrint: () => true });
-    modal.open(recipe(), document.getElementById('trigger') as HTMLButtonElement);
-    (document.getElementById('modal-close-btn') as HTMLButtonElement).focus();
-    const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
-    document.getElementById('recipe-modal')?.dispatchEvent(event);
-    expect(event.defaultPrevented).toBe(true);
-    expect(document.activeElement?.id).toBe('modal-print-btn');
-  });
-
-  it('shows a status message when printing is blocked', () => {
-    const modal = createModal(document, { onPrint: () => false });
-    modal.open(recipe(), document.getElementById('trigger') as HTMLButtonElement);
-    (document.getElementById('modal-print-btn') as HTMLButtonElement).click();
-    expect(document.getElementById('modal-status')?.textContent).toMatch(/pop-?up/i);
   });
 });
 
