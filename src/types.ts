@@ -1,4 +1,6 @@
-/** The ten vibe keys. Must match the `<select id="vibe">` option values. */
+import type { CookTimeBucket } from './core/cookTime';
+
+/** The ten vibe keys, in VIBE_KEYS order. The dial shows them in its own order. */
 export const VIBE_KEYS = [
   'lazy',
   'impressive',
@@ -73,6 +75,8 @@ export interface Recipe {
   category: string | null;
   area: string | null;
   source: string | null;
+  /** Bucketed estimate from the instruction text; null when no duration is mentioned. Absent on v1 entries. */
+  cookTime?: CookTimeBucket | null;
 }
 
 /** A recipe plus the scores from one spin. Scores are contextual and never persisted. */

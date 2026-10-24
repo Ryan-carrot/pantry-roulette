@@ -1,3 +1,4 @@
+import { cookTimeLabel } from '../core/cookTime';
 import type { AddResult } from '../storage/favourites';
 import type { Recipe } from '../types';
 import { el, replaceChildren } from './el';
@@ -26,13 +27,6 @@ function byId<T extends HTMLElement>(root: Document, id: string): T {
   const node = root.getElementById(id);
   if (!node) throw new Error(`Missing #${id} in the sheet markup`);
   return node as T;
-}
-
-/** Cook-time bucket label; "—" until the estimator exists (Phase 5). */
-function cookTimeLabel(recipe: Recipe): string | null {
-  const bucket = (recipe as { cookTime?: string | null }).cookTime;
-  if (!bucket) return null;
-  return bucket === 'under-30' ? '~under 30 min · estimate' : bucket === '30-60' ? '~30–60 min · estimate' : '~over 60 min · estimate';
 }
 
 /**
@@ -81,7 +75,7 @@ export function createModal(root: Document, options: ModalOptions): RecipeModal 
     category.textContent = recipe.category ?? '';
     title.textContent = recipe.name;
 
-    const cookTime = cookTimeLabel(recipe);
+    const cookTime = recipe.cookTime ? cookTimeLabel(recipe.cookTime) : null;
     replaceChildren(meta, [
       el('span', { class: 'meta-item' }, [`${recipe.ingredients.length} ingredients`]),
       recipe.area ? el('span', { class: 'meta-item' }, [recipe.area]) : null,

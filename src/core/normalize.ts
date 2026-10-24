@@ -1,4 +1,5 @@
 import type { MealDbMeal, Recipe } from '../types';
+import { estimateCookTime } from './cookTime';
 
 const MAX_INGREDIENT_SLOTS = 20;
 const DESCRIPTION_LENGTH = 120;
@@ -44,5 +45,6 @@ export function normalizeMeal(meal: MealDbMeal): Recipe {
     category: orNull(meal.strCategory),
     area: orNull(meal.strArea),
     source: orNull(meal.strSource),
+    cookTime: estimateCookTime(instructions, steps),
   };
 }

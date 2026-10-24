@@ -103,6 +103,7 @@ describe('favourites store', () => {
       category: 'Dessert',
       area: null,
       source: null,
+      cookTime: null,
     });
   });
 

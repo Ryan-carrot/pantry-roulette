@@ -1,3 +1,4 @@
+import { isCookTimeBucket } from '../core/cookTime';
 import type { Recipe } from '../types';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -37,6 +38,7 @@ export function toRecipe(value: unknown): Recipe | null {
     category: stringOrNull(value['category']),
     area: stringOrNull(value['area']),
     source: stringOrNull(value['source']),
+    cookTime: isCookTimeBucket(value['cookTime']) ? value['cookTime'] : null,
   };
 }
 
@@ -54,6 +56,7 @@ export function toStoredRecipe(recipe: Recipe): Recipe {
     category: recipe.category,
     area: recipe.area,
     source: recipe.source,
+    cookTime: recipe.cookTime ?? null,
   };
 }
 

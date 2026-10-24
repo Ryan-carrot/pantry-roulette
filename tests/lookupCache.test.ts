@@ -18,6 +18,7 @@ function recipe(overrides: Partial<Recipe> = {}): Recipe {
     category: null,
     area: null,
     source: null,
+    cookTime: null,
     ...overrides,
   };
 }
