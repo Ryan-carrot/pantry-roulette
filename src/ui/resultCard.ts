@@ -5,97 +5,89 @@ import { el, replaceChildren, svgIcon } from './el';
 
 export interface ResultHandlers {
   isSaved: boolean;
+  /** Lowercase label for the vibe pill, e.g. "comfort". */
+  vibeLabel: string;
   onSave: () => AddResult;
   onView: (trigger: HTMLElement) => void;
-  /** Ingredients whose filter request failed; rendered as a non-blocking note. */
+  onSpinAgain: () => void;
+  /** Ingredients whose filter request failed; shown as a notice under the card. */
   failedIngredients?: readonly string[];
 }
 
-const SAVE_LABEL = 'Save to Favorites';
-const SAVED_LABEL = 'Saved to Favorites';
-
-function setSavedState(button: HTMLButtonElement, name: string, saved: boolean): void {
-  replaceChildren(button, [
-    svgIcon('heart', { size: 16, filled: saved }),
-    ` ${saved ? SAVED_LABEL : SAVE_LABEL}`,
-  ]);
-  button.disabled = saved;
-  button.classList.toggle('saved', saved);
-  button.setAttribute(
-    'aria-label',
-    saved ? `${name} is already saved to favorites` : `Save ${name} to favorites`,
-  );
+/** The lit-when-saved treatment: aria-pressed drives the glow in result.css. */
+function setSavedState(button: HTMLButtonElement, saved: boolean): void {
+  button.setAttribute('aria-pressed', String(saved));
+  const text = button.querySelector('.save-text');
+  if (text) text.textContent = saved ? 'Saved' : 'Save';
+  const name = button.dataset['recipeName'] ?? '';
+  button.setAttribute('aria-label', saved ? `${name} is saved` : `Save ${name}`);
 }
 
-/** Render the picked recipe into the aria-live result region. */
-export function renderResult(
-  container: HTMLElement,
-  scored: ScoredRecipe,
-  handlers: ResultHandlers,
-): void {
+/** Render the picked recipe into the result region. The card is the pay-out; the sheet is the star. */
+export function renderResult(container: HTMLElement, scored: ScoredRecipe, handlers: ResultHandlers): void {
   const { recipe } = scored;
   const scorePercent = Math.round(scored.blendedScore * 100);
   const vibePercent = Math.round(scored.vibeScore * 100);
 
   const saveButton = el('button', {
-    id: 'save-btn',
-    class: 'save-btn',
-    'data-recipe-key': recipeKey(recipe),
-    'data-recipe-name': recipe.name,
-  });
-  setSavedState(saveButton, recipe.name, handlers.isSaved);
-
+    id: 'save-btn', type: 'button', class: 'btn-save', 'data-recipe-key': recipeKey(recipe), 'data-recipe-name': recipe.name,
+  }, [svgIcon('heart', { size: 18 }), el('span', { class: 'save-text' }, ['Save'])]);
+  setSavedState(saveButton, handlers.isSaved);
   const note = el('p', { class: 'save-note hidden', role: 'status' });
-
   saveButton.addEventListener('click', () => {
+    if (saveButton.getAttribute('aria-pressed') === 'true') return;
     const result = handlers.onSave();
     if (result === 'full') {
-      note.textContent = 'Favorites are full (50). Remove one to save this recipe.';
+      note.textContent = 'Saved recipes are full (50). Remove one to save this.';
       note.classList.remove('hidden');
       return;
     }
     note.classList.add('hidden');
-    setSavedState(saveButton, recipe.name, true);
+    setSavedState(saveButton, true);
   });
 
-  const viewButton = el(
-    'button',
-    { id: 'view-recipe-btn', class: 'view-recipe-btn', 'aria-label': `View full recipe for ${recipe.name}` },
-    ['View Full Recipe'],
-  );
+  const viewButton = el('button', { id: 'view-recipe-btn', type: 'button', class: 'btn-primary' }, ['View recipe']);
   viewButton.addEventListener('click', () => handlers.onView(viewButton));
+  const againButton = el('button', { id: 'spin-again-btn', type: 'button', class: 'btn-ghost' }, ['Spin again']);
+  againButton.addEventListener('click', () => handlers.onSpinAgain());
 
   replaceChildren(container, [
-    el('p', { class: 'result-label' }, ["Tonight you're making..."]),
-    el('h2', {}, [recipe.name]),
-    recipe.image ? el('img', { src: recipe.image, alt: recipe.name, class: 'result-img' }) : null,
-    el('p', { class: 'description' }, [recipe.description]),
-    el('div', { class: 'meta' }, [
-      el('span', { class: 'meta-ingredients' }, [
-        `${scored.matchedCount}/${recipe.ingredients.length} ingredients`,
+    el('article', { class: 'card' }, [
+      el('div', { class: 'card-media' }, [
+        recipe.image ? el('img', { src: recipe.image, alt: recipe.name }) : el('div', { class: 'card-placeholder' }),
       ]),
-      el('span', { class: 'meta-score' }, [`${scorePercent}% score`]),
-      el('span', { class: 'meta-vibe' }, [`${vibePercent}% vibe`]),
+      el('div', { class: 'card-body' }, [
+        el('h2', { class: 'card-title' }, [recipe.name]),
+        el('p', { class: 'desc' }, [recipe.description]),
+        el('div', { class: 'pills', 'aria-label': 'How this matched' }, [
+          el('span', { class: 'pill' }, [el('b', {}, [`${scored.matchedCount} of ${recipe.ingredients.length}`]), ' ingredients']),
+          el('span', { class: 'pill' }, [el('b', {}, [`${scorePercent}%`]), ' score']),
+          el('span', { class: 'pill' }, [el('b', {}, [`${vibePercent}%`]), ` ${handlers.vibeLabel}`]),
+        ]),
+        el('div', { class: 'card-actions' }, [viewButton, saveButton]),
+        note,
+        el('div', { class: 'card-again' }, [againButton]),
+      ]),
     ]),
-    saveButton,
-    note,
-    viewButton,
     handlers.failedIngredients && handlers.failedIngredients.length > 0
-      ? el('p', { class: 'search-note', role: 'status' }, [
-          `Couldn't search for: ${handlers.failedIngredients.join(', ')}`,
-        ])
+      ? el('p', { class: 'search-note notice', role: 'status' }, [`Couldn't search for: ${handlers.failedIngredients.join(', ')}`])
       : null,
   ]);
 }
 
-/** Replace the result region with a single message (empty input, nothing found, errors). */
-export function renderMessage(container: HTMLElement, message: string): void {
-  replaceChildren(container, [el('p', { class: 'no-match' }, [message])]);
+/** Replace the result region with one line: a plain message, or a coral notice when something failed. */
+export function renderMessage(container: HTMLElement, message: string, kind: 'plain' | 'notice' = 'plain'): void {
+  replaceChildren(container, [el('p', { class: kind === 'notice' ? 'message notice' : 'message' }, [message])]);
 }
 
-/** Flip the result card's save button back to unsaved (after a favourite is removed by key). */
+/** Unlight the card's save button after a favourite is removed by key. */
 export function markResultUnsaved(container: HTMLElement, key: string): void {
   const button = container.querySelector<HTMLButtonElement>('#save-btn');
-  if (!button || button.dataset['recipeKey'] !== key) return;
-  setSavedState(button, button.dataset['recipeName'] ?? '', false);
+  if (button && button.dataset['recipeKey'] === key) setSavedState(button, false);
+}
+
+/** Mark the card as re-saved (the favourite was added from the sheet). */
+export function markResultSaved(container: HTMLElement, key: string): void {
+  const button = container.querySelector<HTMLButtonElement>('#save-btn');
+  if (button && button.dataset['recipeKey'] === key) setSavedState(button, true);
 }

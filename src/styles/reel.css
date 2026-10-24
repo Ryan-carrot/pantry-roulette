@@ -1,0 +1,24 @@
+/* the reel sits under Spin and shows three candidate rows through a window with a gold payline */
+.reel { position: relative; height: 228px; overflow: hidden; border-radius: var(--radius-control); background: var(--elevated); border: 1px solid var(--line); }
+.reel::before, .reel::after { content: ""; position: absolute; left: 0; right: 0; height: 76px; z-index: 2; pointer-events: none; }
+.reel::before { top: 0; background: linear-gradient(var(--elevated), transparent); }
+.reel::after { bottom: 0; background: linear-gradient(transparent, var(--elevated)); }
+.payline { position: absolute; left: 10px; right: 10px; top: 76px; height: 76px; border: 2px solid var(--accent); border-radius: 10px; z-index: 3; pointer-events: none; opacity: .5; transition: opacity var(--overlay-fade); }
+.reel.landed .payline { opacity: 1; }
+.strip { will-change: transform; }
+.reel.spinning .strip { animation: reel-loop 560ms linear infinite; }
+@keyframes reel-loop { from { transform: translateY(0); } to { transform: translateY(-456px); } } /* one copy: 6 rows × 76px */
+.row { height: 76px; display: flex; align-items: center; gap: 14px; padding: 0 22px; }
+.row-img { width: 52px; height: 52px; border-radius: var(--radius-row); object-fit: cover; background: var(--raised); }
+.row-img:not([src]) { visibility: hidden; }
+.row-name { font-family: var(--font-display); font-weight: 700; font-size: var(--size-20); color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row.skeleton .row-name { display: block; width: 46%; height: 14px; border-radius: 7px; background: var(--raised); }
+.row.pick .row-name { color: var(--text-2); }
+.reel.landed .row.pick .row-name { color: var(--text-1); }
+
+@media (max-width: 360px) { .row-name { font-size: var(--size-18); } }
+@media (prefers-reduced-motion: reduce) {
+  .reel.spinning .strip { animation: none; }
+  .strip { transition: none !important; }
+  .payline { transition: none; }
+}

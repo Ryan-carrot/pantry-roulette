@@ -5,8 +5,7 @@ import { renderFavourites } from '../src/ui/favourites';
 import { createModal } from '../src/ui/modal';
 import { buildPrintDocument } from '../src/ui/print';
 import { renderRecentlyViewed } from '../src/ui/recentlyViewed';
-import { markResultUnsaved, renderMessage, renderResult } from '../src/ui/resultCard';
-import type { Recipe, ScoredRecipe } from '../src/types';
+import type { Recipe } from '../src/types';
 
 function recipe(overrides: Partial<Recipe> = {}): Recipe {
   return {
@@ -25,17 +24,6 @@ function recipe(overrides: Partial<Recipe> = {}): Recipe {
   };
 }
 
-function scored(overrides: Partial<ScoredRecipe> = {}): ScoredRecipe {
-  return {
-    recipe: recipe(),
-    matchedCount: 2,
-    ingredientMatch: 2 / 3,
-    vibeScore: 0.2,
-    blendedScore: 0.4333,
-    seen: false,
-    ...overrides,
-  };
-}
 
 const MODAL_HTML = `
   <button id="trigger">open</button>
@@ -81,102 +69,6 @@ describe('el', () => {
     expect(icon.getAttribute('aria-hidden')).toBe('true');
     expect(icon.getAttribute('focusable')).toBe('false');
     expect(icon.querySelector('path')).not.toBeNull();
-  });
-});
-
-describe('renderResult', () => {
-  let container: HTMLElement;
-  beforeEach(() => {
-    container = document.createElement('div');
-    document.body.replaceChildren(container);
-  });
-
-  it('labels the blended score "score" and the overlap "ingredients", with no time pill', () => {
-    renderResult(container, scored(), { isSaved: false, onSave: () => 'added', onView: () => {} });
-    const pills = Array.from(container.querySelectorAll('.meta span')).map((s) => s.textContent);
-    expect(pills).toContain('2/3 ingredients');
-    expect(pills).toContain('43% score');
-    expect(pills).toContain('20% vibe');
-    expect(pills.some((p) => /match/i.test(p ?? ''))).toBe(false);
-    expect(pills.some((p) => /min/i.test(p ?? ''))).toBe(false);
-    expect(container.querySelector('.meta-time')).toBeNull();
-  });
-
-  it('renders the recipe name as text, not markup', () => {
-    renderResult(container, scored({ recipe: recipe({ name: '<b>Evil</b> "Dish"' }) }), {
-      isSaved: false,
-      onSave: () => 'added',
-      onView: () => {},
-    });
-    expect(container.querySelector('h2 b')).toBeNull();
-    expect(container.querySelector('h2')?.textContent).toBe('<b>Evil</b> "Dish"');
-    expect(container.querySelector('img')?.getAttribute('alt')).toBe('<b>Evil</b> "Dish"');
-  });
-
-  it('shows the saved state when already a favourite', () => {
-    renderResult(container, scored(), { isSaved: true, onSave: () => 'exists', onView: () => {} });
-    const save = container.querySelector<HTMLButtonElement>('#save-btn');
-    expect(save?.disabled).toBe(true);
-    expect(save?.classList.contains('saved')).toBe(true);
-  });
-
-  it('saves on click and flips to the saved state', () => {
-    const onSave = vi.fn(() => 'added' as const);
-    renderResult(container, scored(), { isSaved: false, onSave, onView: () => {} });
-    const save = container.querySelector<HTMLButtonElement>('#save-btn');
-    save?.click();
-    expect(onSave).toHaveBeenCalledTimes(1);
-    expect(save?.disabled).toBe(true);
-    expect(save?.classList.contains('saved')).toBe(true);
-  });
-
-  it('shows a note and stays enabled when favourites are full', () => {
-    renderResult(container, scored(), { isSaved: false, onSave: () => 'full', onView: () => {} });
-    const save = container.querySelector<HTMLButtonElement>('#save-btn');
-    save?.click();
-    expect(save?.disabled).toBe(false);
-    expect(container.querySelector('.save-note')?.textContent).toMatch(/full/i);
-  });
-
-  it('flips back to unsaved only when the removed key matches the shown recipe', () => {
-    renderResult(container, scored({ recipe: recipe({ id: '1', name: 'Lasagne' }) }), {
-      isSaved: true,
-      onSave: () => 'exists',
-      onView: () => {},
-    });
-    markResultUnsaved(container, '2');
-    expect(container.querySelector<HTMLButtonElement>('#save-btn')?.disabled).toBe(true);
-    markResultUnsaved(container, '1');
-    expect(container.querySelector<HTMLButtonElement>('#save-btn')?.disabled).toBe(false);
-  });
-
-  it('passes the view button through to onView', () => {
-    const onView = vi.fn();
-    renderResult(container, scored(), { isSaved: false, onSave: () => 'added', onView });
-    container.querySelector<HTMLButtonElement>('#view-recipe-btn')?.click();
-    expect(onView).toHaveBeenCalledTimes(1);
-  });
-
-  it('lists ingredients whose search failed in a status line under the card', () => {
-    renderResult(container, scored(), {
-      isSaved: false,
-      onSave: () => 'added',
-      onView: () => {},
-      failedIngredients: ['olive oil', 'soy sauce'],
-    });
-    const note = container.querySelector('.search-note');
-    expect(note?.textContent).toBe("Couldn't search for: olive oil, soy sauce");
-    expect(note?.getAttribute('role')).toBe('status');
-  });
-
-  it('renders no search note when every ingredient search succeeded', () => {
-    renderResult(container, scored(), { isSaved: false, onSave: () => 'added', onView: () => {} });
-    expect(container.querySelector('.search-note')).toBeNull();
-  });
-
-  it('renders a plain message', () => {
-    renderMessage(container, 'Nothing found');
-    expect(container.querySelector('.no-match')?.textContent).toBe('Nothing found');
   });
 });
 

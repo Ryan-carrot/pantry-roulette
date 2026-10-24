@@ -14,8 +14,16 @@ import { renderFavourites } from './ui/favourites';
 import { createModal } from './ui/modal';
 import { printRecipe } from './ui/print';
 import { renderRecentlyViewed } from './ui/recentlyViewed';
+import { createReel } from './ui/reel';
 import { createVibeSelector } from './ui/vibeSelector';
 import { markResultUnsaved, renderMessage, renderResult } from './ui/resultCard';
+
+/** Read a motion duration token so the reel's timing is tuned in tokens.css, not here. */
+function motionMs(token: string, fallback: number): number {
+  const value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(token));
+  return Number.isFinite(value) ? value : fallback;
+}
+const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function byId<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -66,6 +74,12 @@ const SPIN_IDLE_LABEL = spinText.textContent ?? 'Spin';
 const SPIN_BUSY_LABEL = 'Spinning';
 
 const modal = createModal(document, { onPrint: printRecipe });
+const reel = createReel(byId<HTMLDivElement>('reel'), {
+  spinMs: motionMs('--reel-spin', 1700),
+  landMs: motionMs('--reel-land', 900),
+  maxMs: motionMs('--reel-max', 2500),
+  reduceMotion,
+});
 
 function openRecipe(recipe: Recipe, trigger: HTMLElement): void {
   modal.open(recipe, trigger);
@@ -86,8 +100,9 @@ function refreshRecentlyViewed(): void {
   renderRecentlyViewed(recentSection, recentList, recentlyViewed.list(), { onView: openRecipe });
 }
 
-function showMessage(message: string): void {
-  renderMessage(resultRegion, message);
+function showMessage(message: string, kind: 'plain' | 'notice' = 'plain'): void {
+  reel.cancel();
+  renderMessage(resultRegion, message, kind);
   resultRegion.classList.remove('hidden');
 }
 
@@ -104,7 +119,7 @@ async function spin(): Promise<void> {
 
   const userIngredients = parseIngredients(ingredientsInput.value);
   if (userIngredients.length === 0) {
-    showMessage('🥄 Enter at least one ingredient');
+    showMessage('Enter at least one ingredient.');
     return;
   }
   const vibe = vibeSelector.value();
@@ -112,45 +127,52 @@ async function spin(): Promise<void> {
   spinInFlight = true;
   setSpinning(true);
   resultRegion.classList.add('hidden');
+  resultRegion.classList.remove('pulse', 'away');
+  reel.start();
 
   try {
     const search = await findCandidates(mealDb, userIngredients);
 
     if (search.candidates.length === 0) {
       if (search.failedIngredients.length === userIngredients.length) {
-        showMessage("📡 Couldn't reach the recipe service. Check your connection and try again.");
+        showMessage("Couldn't reach the recipe service. Check your connection and try again.", 'notice');
       } else {
-        showMessage('😬 Nothing found. Try different ingredients.');
+        showMessage('Nothing found. Try different ingredients.');
       }
       return;
     }
+    reel.feed(search.candidates);
 
     const recipes = await loadRecipes(mealDb, lookupCache, search.candidates);
     const pick = pickRecipe(recipes, userIngredients, vibe, seen.asSet());
 
     if (!pick) {
-      showMessage("😬 Found some recipes but couldn't load any of them. Try again.");
+      showMessage("Found recipes but couldn't load any of them. Try again.", 'notice');
       return;
     }
 
+    const outcome = await reel.settle(pick.recipe);
     seen.addRecipe(pick.recipe);
     recentlyViewed.add(pick.recipe);
 
     renderResult(resultRegion, pick, {
       isSaved: favourites.has(pick.recipe),
+      vibeLabel: vibe,
       onSave() {
         const result = favourites.add(pick.recipe);
         if (result === 'added') refreshFavourites();
         return result;
       },
       onView: (trigger) => openRecipe(pick.recipe, trigger),
+      onSpinAgain: () => void spin(),
       failedIngredients: search.failedIngredients,
     });
+    resultRegion.classList.toggle('pulse', outcome === 'pulsed');
     resultRegion.classList.remove('hidden');
     resultRegion.focus();
     refreshRecentlyViewed();
   } catch {
-    showMessage('😬 Something went wrong. Try again.');
+    showMessage('Something went wrong. Try again.', 'notice');
   } finally {
     spinInFlight = false;
     setSpinning(false);

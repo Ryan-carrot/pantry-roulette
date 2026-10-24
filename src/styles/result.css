@@ -1,148 +1,39 @@
-.result-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-card);
-  padding: var(--space-8);
-  box-shadow: var(--shadow-card);
-  animation: slideUp 0.4s ease;
-  outline: none;
-}
+/* the result card: the pay-out. The sheet is the star, so the card stays simple. */
+.result { outline: none; }
+.result.hidden { display: none; }
+.card { background: var(--elevated); border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; transform-origin: 50% 0; animation: payout 500ms var(--ease-out); transition: transform var(--card-tip) var(--ease-in), opacity var(--card-tip) var(--ease-in); }
+.result.pulse .card { animation: payout 500ms var(--ease-out), pulse 900ms ease 500ms; }
+/* the card tips away like a paid-out ticket while the sheet rises */
+.result.away .card { transform: perspective(900px) rotateX(-14deg) translateY(-10px); opacity: 0; }
+@keyframes payout { from { opacity: 0; transform: translateY(-18px) scaleY(0.96); } to { opacity: 1; transform: none; } }
+.card-media { aspect-ratio: 16 / 9; overflow: hidden; background: var(--raised); }
+.card-media img { width: 100%; height: 100%; object-fit: cover; }
+.card-body { padding: var(--space-5) var(--space-6) var(--space-6); }
+.card-title { font-size: var(--size-30); margin-bottom: var(--space-2); font-variation-settings: "opsz" 96; }
+.desc { margin-bottom: var(--space-4); }
+.pills { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-5); }
+.pill { background: var(--raised); border-radius: var(--radius-pill); padding: 6px 12px; font-size: var(--size-14); color: var(--text-2); }
+.pill b { color: var(--text-1); font-weight: 600; }
+.card-actions { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); }
+.btn-primary { padding: 14px; border-radius: var(--radius-control); background: var(--accent); color: var(--on-accent); font-family: var(--font-display); font-weight: 800; font-size: var(--size-18); transition: transform var(--quick); }
+.btn-primary:active { transform: scale(0.985); }
+.btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-3); padding: 12px 14px; border-radius: var(--radius-control); background: var(--raised); color: var(--text-1); font-weight: 500; }
+/* the save lamp: unlit is a quiet ghost button; lit is green with a soft halo (box-shadow only, no filter) */
+.btn-save { display: inline-flex; align-items: center; gap: var(--space-3); padding: 12px 14px; border-radius: var(--radius-control); background: var(--raised); color: var(--text-1); font-weight: 500; border: 1px solid transparent; transition: color var(--save-glow), border-color var(--save-glow), box-shadow var(--save-glow); }
+.btn-save[aria-pressed=true] { color: var(--state); border-color: var(--state); box-shadow: 0 0 0 1px var(--state), 0 0 18px var(--glow); }
+.btn-save[aria-pressed=true] svg { fill: currentColor; }
+.save-note { color: var(--text-3); font-size: var(--size-14); margin-top: var(--space-3); }
+.save-note.hidden { display: none; }
+.card-again { margin-top: var(--space-4); }
+.card-again .btn-ghost { width: 100%; background: transparent; color: var(--text-2); border: 1px solid var(--line); }
+.card-again .btn-ghost:hover { color: var(--text-1); border-color: var(--text-3); }
+.message { color: var(--text-2); text-align: center; padding: var(--space-4) 0; }
+.message.notice, .search-note.notice { color: var(--notice); }
+.search-note { font-size: var(--size-14); text-align: center; margin-top: var(--space-4); }
 
-.result-card.hidden {
-  display: none;
-}
-
-.result-card .result-label {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--color-brand);
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-.result-card h2 {
-  font-family: var(--font-display);
-  font-size: 2rem;
-  color: var(--color-text);
-  margin-bottom: 10px;
-}
-
-.result-card .description {
-  color: var(--color-text-secondary);
-  font-size: 1rem;
-  line-height: 1.6;
-  margin-bottom: var(--space-5);
-}
-
-.result-img {
-  width: 100%;
-  border-radius: var(--radius-input);
-  margin: var(--space-4) 0;
-  object-fit: cover;
-  max-height: 220px;
-}
-
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.meta span {
-  background: var(--color-surface-raised);
-  color: var(--color-text-body);
-  padding: var(--space-2) 10px;
-  border-radius: var(--radius-card);
-  font-size: 0.8rem;
-  font-weight: 600;
-  white-space: nowrap;
-  flex: 1 1 auto;
-  text-align: center;
-  min-width: 0;
-}
-
-/* Emoji-in-CSS pattern kept from v1 for the pill icons. */
-.meta-ingredients::before {
-  content: '🧄 ';
-}
-
-.meta-score::before {
-  content: '✅ ';
-}
-
-.meta-vibe::before {
-  content: '🎭 ';
-}
-
-.meta-area::before {
-  content: '🌍 ';
-}
-
-.save-btn {
-  margin-top: var(--space-5);
-  background: transparent;
-  border: 2px solid var(--color-brand);
-  color: var(--color-brand);
-  font-family: var(--font-body);
-  font-weight: 700;
-  padding: 10px 20px;
-  border-radius: var(--radius-secondary);
-  cursor: pointer;
-  transition: all var(--ease);
-  width: 100%;
-}
-
-.save-btn:hover {
-  background: var(--color-brand);
-  color: var(--color-on-accent);
-  transform: translateY(-2px);
-}
-
-.save-btn.saved {
-  border-color: var(--color-success);
-  color: var(--color-success);
-  cursor: default;
-}
-
-.save-btn.saved:hover {
-  background: transparent;
-  transform: none;
-}
-
-.save-note {
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  text-align: center;
-  margin-top: var(--space-3);
-}
-
-.save-note.hidden {
-  display: none;
-}
-
-.search-note {
-  color: var(--color-text-secondary);
-  font-size: 0.85rem;
-  text-align: center;
-  margin-top: var(--space-4);
-}
-
-.view-recipe-btn {
-  margin-top: var(--space-3);
-  background: var(--color-surface-raised);
-  border: 2px solid var(--color-surface-raised);
-  color: var(--color-text-body);
-  font-family: var(--font-body);
-  font-weight: 700;
-  padding: 10px 20px;
-  border-radius: var(--radius-secondary);
-  cursor: pointer;
-  transition: all var(--ease);
-  width: 100%;
-}
-
-.view-recipe-btn:hover {
-  background: transparent;
-  border-color: var(--color-text-body);
-  transform: translateY(-2px);
+@media (max-width: 360px) { .card-title { font-size: 26px; } }
+@media (prefers-reduced-motion: reduce) {
+  .card, .result.pulse .card { animation: none; transition: none; }
+  .result.away .card { transform: none; opacity: 0.4; }
+  .btn-save, .btn-primary { transition: none; }
 }
