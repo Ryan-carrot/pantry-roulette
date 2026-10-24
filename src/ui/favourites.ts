@@ -8,12 +8,8 @@ export interface FavouriteHandlers {
   onRemove: (key: string) => void;
 }
 
-export function renderFavourites(
-  list: HTMLElement,
-  empty: HTMLElement,
-  favourites: readonly Recipe[],
-  handlers: FavouriteHandlers,
-): void {
+/** Saved recipes on the main page. Every card carries a lit lamp: it is saved, so the lamp is on. */
+export function renderFavourites(list: HTMLElement, empty: HTMLElement, favourites: readonly Recipe[], handlers: FavouriteHandlers): void {
   if (favourites.length === 0) {
     replaceChildren(list, []);
     empty.classList.remove('hidden');
@@ -21,36 +17,24 @@ export function renderFavourites(
   }
   empty.classList.add('hidden');
 
-  replaceChildren(
-    list,
-    favourites.map((recipe) => {
-      const viewButton = el(
-        'button',
-        { class: 'view-recipe-btn fav-view-btn', 'aria-label': `View full recipe for ${recipe.name}` },
-        ['View Full Recipe'],
-      );
-      viewButton.addEventListener('click', () => handlers.onView(recipe, viewButton));
+  replaceChildren(list, favourites.map((recipe) => {
+    const viewButton = el('button', { type: 'button', class: 'fav-view-btn', 'aria-label': `View ${recipe.name}` }, ['View recipe']);
+    viewButton.addEventListener('click', () => handlers.onView(recipe, viewButton));
 
-      const removeButton = el(
-        'button',
-        { class: 'remove-btn', 'data-key': recipeKey(recipe), 'aria-label': `Remove ${recipe.name} from favorites` },
-        [svgIcon('close', { size: 16 })],
-      );
-      removeButton.addEventListener('click', (event) => {
-        // currentTarget is always the button, whatever child the pointer hit.
-        const button = event.currentTarget as HTMLButtonElement;
-        const key = button.dataset['key'];
-        if (key !== undefined) handlers.onRemove(key);
-      });
+    const removeButton = el('button', { type: 'button', class: 'remove-btn', 'data-key': recipeKey(recipe), 'aria-label': `Remove ${recipe.name} from saved` }, [svgIcon('close', { size: 18 })]);
+    removeButton.addEventListener('click', (event) => {
+      /* currentTarget is always the button, whatever child the pointer hit */
+      const key = (event.currentTarget as HTMLButtonElement).dataset['key'];
+      if (key !== undefined) handlers.onRemove(key);
+    });
 
-      return el('div', { class: 'fav-card' }, [
-        recipe.image ? el('img', { src: recipe.image, alt: recipe.name, class: 'fav-img' }) : null,
-        el('div', { class: 'fav-info' }, [
-          el('h3', {}, [recipe.name]),
-          el('p', {}, [recipe.description]),
-          el('div', { class: 'fav-actions' }, [viewButton, removeButton]),
-        ]),
-      ]);
-    }),
-  );
+    return el('article', { class: 'fav' }, [
+      recipe.image ? el('img', { src: recipe.image, alt: '', class: 'fav-img' }) : el('div', { class: 'fav-placeholder' }),
+      el('div', { class: 'fav-body' }, [
+        el('h3', { class: 'fav-title' }, [el('span', { class: 'lamp', 'aria-hidden': 'true' }), recipe.name]),
+        el('p', { class: 'fav-desc' }, [recipe.description]),
+        el('div', { class: 'fav-actions' }, [viewButton, removeButton]),
+      ]),
+    ]);
+  }));
 }
