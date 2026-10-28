@@ -86,8 +86,17 @@ A `fieldset` of ten radio inputs, each inside a `label.vibe-item` on a snap-scro
 ### Spin button (`shell.css`)
 Full-width gold, display face 20/800, on-accent text. Disabled while a spin is in flight: raised background, text-3. Tricky bit: the default gold focus ring is invisible on gold, so `:focus-visible` uses text-1 here.
 
+### Surprise me (`shell.css`)
+A text link under Spin: text-2 at 15, underlined, text-1 on hover, text-3 and no underline while disabled. It is deliberately not a second gold button; gold is for the machine. Tricky bit: it shares the in-flight guard with Spin, so both disable together.
+
+### Exhausted notice (`ui/resultCard.ts`, `result.css`)
+`p.message.exhausted` in text-2 with an inline `button.btn-inline` ("clear history") in gold, underlined. Not coral: nothing is wrong. Clicking clears the seen list and spins again.
+
 ### Reel (`ui/reel.ts`, `reel.css`)
 A 228px window on elevated with a gold payline at rows 2 of 3 (`top: 76px; height: 76px`) and gradient fades top and bottom. The strip holds 24 rows (6 slots × 4 copies); rows are 76px with a 52px thumbnail and the name in the display face at 20. `.reel.spinning .strip` runs `reel-loop`, one copy (456px) per 560ms. Landing freezes the loop by reading the computed `matrix()` Y, sets it inline, then transitions to `-(16 × 76)px` so the pick in the third copy sits on the payline with a row showing below. Hidden until the first spin. Tricky bit: `ROW_HEIGHT` in the TS and `.row { height }` in the CSS must agree.
+
+### Scroll after a spin (`ui/scroll.ts`)
+Not a visual component but part of the card's arrival: focus the result region with `preventScroll`, `scrollIntoView({ block: 'nearest' })` on the card, then nudge the page by any overflow at the bottom plus 16px so the action row is on screen. Smooth unless reduced motion.
 
 ### Result card (`ui/resultCard.ts`, `result.css`)
 `article.card` on elevated, radius 14: 16:9 image, title 30/700 display, description, three pills on raised (`b` in text-1 for the numbers), then a grid of View recipe (gold `.btn-primary`) and the Save lamp, a full-width ghost "Spin again" beneath, and an optional coral `.search-note`. Arrival: `payout`. When the sheet opens from it the region gets `.away`: `perspective(900px) rotateX(-14deg) translateY(-10px)` fading, with `transform-origin: 50% 0`. Tricky bit: the card's `transition` must stay on `transform` and `opacity` only, or the `.away` tip and the `payout` keyframe fight.

@@ -119,3 +119,22 @@ Every design decision made during the rebuild, one per line, with the reasoning.
 - **`main` has `tabindex="-1"`** so the skip link actually moves focus in every browser.
 - **Emoji are gone.** Messages are plain text; failures are coral.
 - **Out of scope and not built**: Surprise Me, exclusion instead of penalty, servings scaling, equipment inference, a real logo.
+
+## Final sandbox pass (scroll, exclusion, surprise me, servings spike)
+
+- **Scroll after focus, with `preventScroll` on the focus call.** Focus first so the ring is on the card, then scroll so the ring is on screen; the other order scrolls to the region's top and can leave the buttons clipped again.
+- **`scrollIntoView({ block: 'nearest' })` first, then nudge by the overflow.** `nearest` is the least movement that gets the card in; a card taller than the viewport still clips at the bottom, so the page is nudged by the clipped amount plus 16px, accepting that the image's top goes off screen. The buttons matter more than the photo right after a spin.
+- **Never scroll for a notice.** A one-line message does not need the page to move.
+- **Exclusion, not a penalty.** The 0.3× multiplier let a seen recipe win a small pool, which made "clear history" feel broken (Ryan, manual round 2). Seen recipes leave the ranked pool; `scoreRecipe` still reports `seen` so the card could show it.
+- **`pickRecipe` returns a tagged result** (`pick` / `exhausted` / `empty`) instead of `ScoredRecipe | null`. The three outcomes need three different messages, and a null cannot say which.
+- **The exhausted notice carries the clear action inline and spins again on click.** The message says "clear history to start over"; making the user find the button at the bottom of the page would be a second step for no reason. The main "Clear seen history" button stays for the deliberate case.
+- **The random fallback draws from unseen candidates only.** Otherwise a pool where every unseen candidate scores zero could re-show a seen one.
+- **Surprise me is a text link, not a second gold button.** Gold is for the machine; a random roll is a shortcut.
+- **Surprise me re-rolls at most three times and then returns the last roll even if seen.** Three `random.php` calls is the cost ceiling; after that, showing something beats showing nothing.
+- **Every surprise roll is cached by id**, so a later ingredient spin that lands on it skips the lookup.
+- **Surprise results score with an empty ingredient list** (`ingredientMatch` 0, so the blend is half the vibe score) and the card shows "— ingredients". The score pill stays because the vibe half is real.
+- **Surprise and Spin share `showPick`** so the reel, seen list, recently viewed, card and scroll behave identically; "Spin again" on a surprise card rolls again rather than spinning with an empty input.
+- **The measure parser canonicalises units but drops vague ones** (pinch, sprig, dash, handful) to null while keeping the quantity, so a scaler can multiply "2 sprigs" without a weight.
+- **Ranges take the low end** ("1-2 cloves" → 1). Scaling the low end is the conservative choice; the high end can be reintroduced later as a second field.
+- **The spike's bar was quantity rate, not unit rate.** Scaling needs a number; a unit is only needed for conversion, which a servings control does not do. 90.8% clears the 85% bar; the misses are strings that should not scale anyway.
+- **No servings control**, per the brief. The real question the spike surfaced is that MealDB has no base servings, so any control is a multiplier with an assumed base; that is design work for the production app, not the sandbox.

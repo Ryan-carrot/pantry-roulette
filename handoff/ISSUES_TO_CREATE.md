@@ -274,3 +274,74 @@ so the winner is whichever tied recipe came first in the candidate pool, and the
 - [ ] The 51st save is refused with a visible message
 - [ ] Existing favourites are never dropped silently
 - [ ] Unit test for the cap
+
+---
+
+# Issues from the sandbox passes after the bug list
+
+These are changes the sandbox made beyond the 24 bugs. Each is a self-contained issue; the UI redesign is an epic the others can hang off. Labels are from your existing set; suggest a new milestone, "v2.0.0 Redesign", for all five.
+
+## Epic: UI redesign (direction C with B's sheet)
+
+**Labels:** `design`, `feature`, `accessibility`, `css`
+
+Rebuild the UI against the chosen design. The system is written up in the sandbox's `design/SYSTEM.md` (tokens with measured contrast, type scale, motion table, component inventory) and per component in `handoff/HANDCODE_SPEC.md` §8, with a build order in §9. The three directions and the brief that chose between them are in `design/mockups/` and `handoff/DESIGN_BRIEF.md`.
+
+What changes, in one line each: an aubergine-black palette with one gold accent, green for state and coral for notices; Bricolage Grotesque for names and Archivo for reading; the vibe dropdown becomes a snap-scroll dial of radio inputs with a "see all" grid; the spin is a visible reel that lands on the pick; the result card gets a lit-when-saved lamp; the recipe sheet gets checkable ingredients, 18px steps and Save / Print / Close pinned at its foot; emoji are gone.
+
+**Acceptance Criteria:**
+- [ ] Every colour, size, radius and motion value is a custom property on `:root`
+- [ ] The dial is a `<fieldset>` of radios; arrow keys step without wrapping
+- [ ] The reel never lands before 1.7 s, skips the landing past 2.5 s, and does not move under reduced motion
+- [ ] The sheet's bar never scrolls away; ticks reset on reopen; focus returns to the trigger on every close path
+- [ ] Every text pair is at least 4.5:1 on the surface it sits on
+- [ ] Round 3 and Round 4 of the sandbox's `docs/MANUAL_TEST.md` pass on a phone
+
+Child issues: the four below, plus #34 (custom properties) and #36 (reduced motion) from Sprint 7.
+
+## Exclude seen recipes instead of penalising them
+
+**Labels:** `feature`, `vibe-engine`
+
+The seen list multiplies a seen recipe's score by 0.3. With a small candidate pool a seen recipe still wins, so "clear history" looks like it does nothing (manual testing, round 2). Replace the multiplier with exclusion: seen recipes are removed from the ranked pool. When every candidate has been seen, show a distinct state, not "nothing found" and not a connection error: "You've seen everything for these ingredients — clear history to start over", with the clear-history action inline. The random fallback draws from unseen candidates only. Keep the seen cap at 20 and keep the `seen` flag on the scored object. Reference: sandbox `src/core/scoring.ts` (`rankRecipes`, `pickRecipe` returning `{ kind: 'pick' | 'exhausted' | 'empty' }`), `src/ui/resultCard.ts` (`renderExhausted`).
+
+**Acceptance Criteria:**
+- [ ] A pool where every candidate is seen yields the exhausted message with a working inline clear action
+- [ ] A pool with one unseen candidate picks it even if a seen one scores higher
+- [ ] After clearing history the top scorer is picked again
+- [ ] Unit tests for the three pick states
+
+## Surprise me
+
+**Labels:** `feature`, `api`
+
+A text link under Spin that calls `random.php`, normalises the result through the same path as a lookup, caches it by id, and re-rolls up to three times while the roll is one the user has already seen. Rendered through the same reel and card; the ingredients pill reads "— ingredients" because there was no input, and "Spin again" on that card rolls again. Disabled while a spin is in flight. Closes #40. Reference: sandbox `src/api/surprise.ts`, the `surprise()` flow in `src/main.ts`.
+
+**Acceptance Criteria:**
+- [ ] A random recipe renders through the normal card with the reel
+- [ ] Two seen rolls followed by an unseen one yields the unseen one (unit test with a stubbed fetch)
+- [ ] Rolls are cached by id; a later ingredient spin does not look them up again
+- [ ] The ingredients pill shows a dash, not "0 of N"
+
+## Scroll the whole card into view after a spin
+
+**Labels:** `bug`, `ui`
+
+After the reel lands, the card's action row can sit below the fold on a phone (manual testing, round 3). After rendering: focus the result region with `preventScroll`, then `card.scrollIntoView({ block: 'nearest' })`, then if the card's bottom edge is still clipped scroll the page by the overflow plus a 16px margin. Smooth unless `prefers-reduced-motion`, then auto. Do not scroll for a notice. Reference: sandbox `src/ui/scroll.ts` (`scrollCardIntoView`).
+
+**Acceptance Criteria:**
+- [ ] After a spin on a 390px viewport the card including its buttons is fully visible
+- [ ] The focus ring on the result is visible after the scroll
+- [ ] Reduced motion scrolls instantly
+- [ ] Unit test with a stubbed viewport and `scrollBy`
+
+## Cook-time estimate from the instruction text
+
+**Labels:** `feature`, `data-integrity`
+
+TheMealDB has no cook-time field (#35 removed the fake one). Estimate a bucket from the instruction text: parse duration phrases (minutes, mins, hours, hrs, ranges, "overnight", "half an hour"), take the largest single duration plus three minutes per step, and bucket as under-30, 30-60 or over-60. No duration at all means null and the sheet shows a dash. Show it as "~30–60 min · estimate" in the amber token. Derive it in `normalizeMeal` so it is cached with the recipe. Related: #41. Reference: sandbox `src/core/cookTime.ts`.
+
+**Acceptance Criteria:**
+- [ ] One fixture per bucket, one with no durations yielding null, one with "overnight" yielding over-60, one with overlapping phrases picking the max
+- [ ] The sheet shows the estimate pill or a dash, never a number
+- [ ] Stored recipes carry the bucket; legacy entries read back as null

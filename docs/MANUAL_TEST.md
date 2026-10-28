@@ -178,3 +178,42 @@ Turn on "Reduce motion" in the OS (Android: Settings → Accessibility → Remov
 ### Result =>
 
 -
+
+# Round 4 - Manual Tests (final sandbox pass)
+
+Three changes only: scroll to the card, exclusion instead of penalty, and Surprise me. Phone first, then one check in a desktop window.
+
+## Scroll to the card
+
+1. Scroll the page so the Spin button is near the top of the screen, type `chicken, onion, tomato`, tap Spin. [When the reel lands the page moves so the whole card is visible, including "View recipe", Save and "Spin again"; the focus ring sits on the card.]
+2. Tap "Spin again" twice. [Same each time; no jump that hides the buttons.]
+3. Turn on airplane mode and spin. [The coral message appears without the page scrolling.]
+4. With "Reduce motion" on, spin. [The page moves instantly rather than smoothly, and the card is still fully visible.]
+
+### Result =>
+
+-
+
+## Exclusion instead of penalty
+
+1. Type `tofu, miso` (a small pool) and spin until the result stops changing. [Each spin shows a recipe you have not seen in this session; none repeats.]
+2. Keep spinning. [Within a few spins the result region reads "You've seen everything for these ingredients — clear history to start over", with "clear history" as a link. No reel movement, no coral.]
+3. Tap "clear history" in that message. [The reel runs and the first recipe you saw comes back.]
+4. Spin once with `chicken, onion, tomato`, then tap the "Clear seen history" button at the bottom. [It reads "History cleared" for two seconds; the next spin may show the same recipe again.]
+
+### Result =>
+
+-
+
+## Surprise me
+
+1. Clear the ingredients field, tap "Surprise me" under Spin. [The reel runs and lands; the card shows a random recipe with "— ingredients" as the first pill and a score and vibe pill after it.]
+2. Tap "Spin again" on that card. [Another random recipe, not an empty-input message.]
+3. Tap Surprise me three or four times. [No recipe repeats until history runs out of unseen rolls.]
+4. Open the recipe, Save it, close. [Same sheet, same lamp, same Saved card as a normal spin.]
+5. Tap Spin with empty ingredients. [Still "Enter at least one ingredient."; Surprise me is the only no-input path.]
+6. While a spin is running, tap Surprise me. [It is disabled until the spin finishes.]
+
+### Result =>
+
+-

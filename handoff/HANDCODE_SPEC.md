@@ -214,16 +214,16 @@ The vibe engine and the blend. All pure functions: no DOM, no storage, no fetch.
 **Hand-code notes:** `pickRecipe(candidates, ingredients, vibe, seenSet, random = Math.random)`. Three early returns. The random fallback is only reachable for an unknown vibe value in practice, which is fine.
 **Test to write:** An empty candidate list returns `null`; with no overlap and an unknown vibe, an injected `random = () => 0.99` picks the last candidate.
 
-### Seen penalty keyed by id
+### Seen recipes are excluded, not penalised
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** The seen check uses the recipe's `id` when it has one, and falls back to `name` so seen lists written by the current production app still work.
-**Original bug:** BUGS_RESOLVED #19 (scoring side)
-**Issue:** create ("Keep idMeal on normalised recipes")
-**Reference:** `src/core/identity.ts` (`isSeen`), `src/core/scoring.ts` (`scoreRecipe`)
-**Why it works this way:** Section 4 stores ids in the seen list. Checking `seen.has(id) || seen.has(name)` means a list containing old names and new ids both penalise correctly, with no migration step.
-**Hand-code notes:** Pass the seen list as a `Set` of strings; the check is two `has` calls.
-**Test to write:** A seen set containing the id penalises the recipe; one containing a different id does not even if the name matches; a seen set of names (legacy) still penalises.
+**What it fixes / does:** Seen recipes leave the ranked pool; the seen check uses the recipe's `id` when it has one and falls back to `name` so seen lists written by the current production app still work. `pickRecipe` returns one of three results: `{ kind: 'pick', pick }`, `{ kind: 'exhausted' }` when every candidate has been seen, `{ kind: 'empty' }` when there were no candidates. The random fallback (nothing scores above zero) draws from unseen candidates only.
+**Original bug:** BUGS_RESOLVED #19 (scoring side); the exclusion itself is new behaviour from manual round 2
+**Issue:** create ("Exclude seen recipes instead of penalising them") and ("Keep idMeal on normalised recipes")
+**Reference:** `src/core/identity.ts` (`isSeen`), `src/core/scoring.ts` (`rankRecipes`, `pickRecipe`, `PickResult`)
+**Why it works this way:** v1 multiplied the blended score by 0.3 for a seen recipe. With a small pool the penalised recipe still won, so "clear history" looked like it did nothing. Exclusion makes every spin show something new until there is nothing new, and then says so: the exhausted state is its own message with the clear action inline, because the fix is different from "nothing found" (change the input) or a connection error (check the network). `scoreRecipe` still reports `seen` on the scored object so a card could show it.
+**Hand-code notes:** In `rankRecipes`, filter `!scored.seen` before the zero-score filter. `pickRecipe` becomes: empty pool → `empty`; best ranked → `pick`; else unseen candidates → random one; else `exhausted`. A tagged object (`kind`) rather than `null` because three outcomes need three messages. The old multiplier is one line to put back if you ever want the softer behaviour.
+**Test to write:** A pool where every candidate is seen yields `exhausted`; a pool with one unseen candidate picks it even if a seen one scores higher; clearing the seen set and picking again returns the top scorer; the seen flag matches ids and legacy names.
 
 ---
 
@@ -290,175 +290,211 @@ Three stores plus the lookup cache, all through the same guarded read and write 
 
 ## 5. UI behaviour
 
-Behaviour only. Markup and styling are yours (section 8 is the stub for the redesign).
+Behaviour only; the look is §8. Everything here is design-independent and was first built against the v1 markup, then carried into the redesign unchanged.
 
 ### Build DOM with `createElement` and `textContent`, never `innerHTML` with API strings
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** A small `el(tag, attrs, children)` helper that sets attributes and appends text nodes or elements. The result card, favourite cards, recent cards and the print document are built with it. No `innerHTML` anywhere.
+**What it fixes / does:** A small `el(tag, attrs, children)` helper that sets attributes and appends text nodes or elements; `svgIcon(name)` builds the inline icons with `createElementNS`. Every rendered surface (card, sheet, saved, recent, reel rows, print document) uses it. No `innerHTML` anywhere.
 **Original bug:** BUGS_RESOLVED #7
 **Issue:** create (appendix: "Build cards with DOM APIs")
 **Reference:** `src/ui/el.ts` (`el`, `append`, `replaceChildren`, `svgIcon`)
-**Why it works this way:** Recipe names come from the API and are round-tripped through localStorage. A `"` in a name broke `alt` and `aria-label` in the template literal; a `<` injected markup. The modal was already built safely in v1; this brings the other three renderers in line. The helper keeps the call sites about as short as the template literals were.
-**Hand-code notes:** `el` is about fifteen lines. For the inline SVG icons, `document.createElementNS` with the Lucide path data; `svgIcon(name)` in the reference shows the six you need. Template literals are fine for static markup in `index.html`; the rule is only about interpolated strings.
-**Test to write:** Rendering a recipe named `<b>Evil</b> "Dish"` yields an `h2` with that literal text and no `<b>` child, and the image `alt` equals the raw name.
+**Why it works this way:** Recipe names come from the API and are round-tripped through localStorage. A `"` in a name broke `alt` and `aria-label` in the template literal; a `<` injected markup. The helper keeps call sites about as short as the template literals were.
+**Hand-code notes:** `el` is about fifteen lines. Template literals are fine for the static markup in `index.html`; the rule is only about interpolated strings.
+**Test to write:** Rendering a recipe named `<b>Evil</b> "Dish"` yields an `h2` with that literal text, no `<b>` child, and an image `alt` equal to the raw name.
 
-### Focus return from the modal
+### The spin flow and the reel's hold-until-data rule
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** `open(recipe, trigger)` remembers the element that opened the modal; `close()` returns focus to it on every path: close button, Escape, backdrop click.
+**What it fixes / does:** One `spin()` function: parse input → start the reel → `findCandidates` → feed the reel with the stubs → `loadRecipes` → `pickRecipe` → settle the reel on the pick → render the card → focus → scroll. The reel runs while data loads and only lands when the pick exists. It never lands before `--reel-spin` even if the cache answers instantly; if the pick arrives so late that landing would end after `--reel-max`, it skips the landing and the card pulses instead. Spin and Surprise me are both disabled while either is in flight.
+**Original bug:** BUGS_RESOLVED #14, #16; the reel is Ryan's brief item one
+**Issue:** create ("Unreachable fallback and silent crash on empty pool"), ("Concurrent spins"), epic
+**Reference:** `src/main.ts` (`spin`, `showPick`, `setSpinning`), `src/ui/reel.ts` (`settle`)
+**Why it works this way:** The reel is the sense of spin the brief asked for, and it is honest: it shows real candidates (names and thumbnails arrive from the filter calls before the details do). The timing rules keep it from feeling like a hang when the network is slow or like a flicker when the cache is warm. `finally` re-enables the buttons so an exception never leaves the page dead.
+**Hand-code notes:** `settle(pick)` records `elapsed = now - startedAt`, then: reduced motion → place the pick and resolve `'instant'`; `elapsed + land > max` → jump to the final offset and resolve `'pulsed'`; else wait `max(0, spin - land - elapsed)` and run the landing transition for `land`. Read the three durations from the custom properties at startup. Keep the reel `aria-hidden`; the result region is the live region.
+**Test to write:** With fake timers, a settle at once resolves after exactly `--reel-spin` with `'landed'`; a settle at 2.0 s resolves immediately with `'pulsed'`; under reduced motion `'instant'`.
+
+### Scroll the whole card into view after a spin
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it fixes / does:** After the card renders: `resultRegion.focus({ preventScroll: true })`, then `card.scrollIntoView({ block: 'nearest' })`, then if `card.getBoundingClientRect().bottom` is still past `innerHeight - 16`, `window.scrollBy({ top: overflow })`. Smooth unless reduced motion. Never for a notice.
+**Original bug:** new behaviour (manual round 3)
+**Issue:** create ("Scroll the whole card into view after a spin")
+**Reference:** `src/ui/scroll.ts` (`scrollCardIntoView`), the end of `showPick` in `src/main.ts`
+**Why it works this way:** On a phone the reel lands with the card's action row below the fold. Focus first so the ring is on the card; scroll second so the ring is on screen. `nearest` moves the least; the nudge covers a card taller than the viewport, where the buttons matter more than the top of the photo.
+**Hand-code notes:** Inject `scrollBy` so the test can stub it. Fifteen lines.
+**Test to write:** With a stubbed rect and viewport, a clipped card calls `scrollBy` with the overflow plus the margin; a card that fits does not; reduced motion passes `behavior: 'auto'`.
+
+### Three result states that are not a pick
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it fixes / does:** "Enter at least one ingredient." for blank input; "Nothing found. Try different ingredients." for an empty candidate list with no failures; "Couldn't reach the recipe service. Check your connection and try again." in coral when every ingredient request failed; "Found recipes but couldn't load any of them." in coral when candidates existed but every lookup failed; and the exhausted message with its inline clear action when every candidate has been seen. A partial failure (some ingredients down, result found) adds a coral "Couldn't search for: ..." under the card.
+**Original bug:** BUGS_RESOLVED #14, #15; exhausted is §3
+**Issue:** create (both network issues), ("Exclude seen recipes")
+**Reference:** `src/main.ts` (`spin`), `src/ui/resultCard.ts` (`renderMessage`, `renderExhausted`)
+**Why it works this way:** Each message maps to a different thing the user can do about it. Coral means something went wrong; the exhausted state is not wrong, so it is not coral.
+**Hand-code notes:** `renderMessage(container, text, kind)` is `replaceChildren` with one `<p>`; `renderExhausted` builds the sentence around an inline `<button>`.
+**Test to write:** `renderMessage` with `'notice'` renders `.message.notice`; `renderExhausted` renders the sentence and clicking the inline button calls the handler.
+
+### Surprise me
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it fixes / does:** A text link under Spin. `surpriseMe(client, cache, seen)` calls `random.php`, normalises the meal through `normalizeMeal`, caches it by id, and re-rolls up to three times while the roll is seen, returning the last roll if all three were. The result runs through the same reel (fed with the one roll) and the same card with "— ingredients"; "Spin again" on that card rolls again.
+**Original bug:** new behaviour; production issue #40
+**Issue:** #40 and create ("Surprise me")
+**Reference:** `src/api/surprise.ts`, `createMealDbClient().random()` in `src/api/mealdb.ts`, `surprise()` and `showPick()` in `src/main.ts`
+**Why it works this way:** It fits the name of the app better than anything else and solves the blank-pantry start. Sharing `showPick` with the normal spin means the reel, seen list, recently viewed, Save and scroll all behave the same for free.
+**Hand-code notes:** Score the roll with an empty ingredient list; the vibe half of the score is real, the ingredient half is zero, and the card hides the match count behind a dash. Three rolls is the request ceiling.
+**Test to write:** A stubbed `random.php` returning a seen id twice then an unseen one yields the unseen one in three calls; every roll is in the cache; a failing service yields null.
+
+### Focus return from the sheet
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it fixes / does:** `open(recipe, trigger)` remembers the element that opened the sheet; `close()` returns focus to it on every path: Close in the bar, Escape, backdrop click. If the trigger is no longer in the document, nothing is focused rather than throwing.
 **Original bug:** BUGS_RESOLVED #5
 **Issue:** #31
-**Reference:** `src/ui/modal.ts` (`createModal`, `open`, `close`)
-**Why it works this way:** Without it a keyboard user lands on `<body>` and has to Tab from the top. Passing the trigger explicitly (rather than reading `document.activeElement` on open) is more reliable when the modal is opened from a click that already moved focus. If the trigger is no longer in the document (the result was re-rendered), skip the focus call rather than throw.
-**Hand-code notes:** One module-level `returnTo` variable, set in `open`, used and cleared in `close`. Every call site that opens the modal passes the button it is wired to. The Escape listener should be added on open and removed on close so it is not global forever.
+**Reference:** `src/ui/modal.ts` (`open`, `close`)
+**Why it works this way:** Without it a keyboard user lands on `<body>`. Passing the trigger explicitly is more reliable than reading `activeElement` after a click has already moved focus. The Escape listener is added on open and removed on close so it is not global forever.
+**Hand-code notes:** One module-level `returnTo`, set in `open`, used and cleared in `close`. Every call site passes the button it is wired to.
 **Test to write:** Open from a button, close by each of the three paths, assert `document.activeElement` is that button each time.
 
-### Keyboard-reachable recently-viewed cards
+### Opening the sheet from the card tips the card away
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** Each recent card is a `<button type="button">` with an `aria-label` of "View {name}", styled to look like the v1 div.
-**Original bug:** BUGS_RESOLVED #18
-**Issue:** create ("Recently viewed cards are mouse-only")
-**Reference:** `src/ui/recentlyViewed.ts` (`renderRecentlyViewed`), `src/styles/recently.css` (`.recent-card` resets)
-**Why it works this way:** A `div` with a click listener has no tab stop and no Enter/Space handling. A real button gets all of that for free; the CSS resets (`background: transparent; border: none; font: inherit`) are cheaper than re-implementing keyboard handling on a div.
-**Hand-code notes:** Change the tag and add the resets. The image inside gets `alt=""` because the button's label already names the recipe.
-**Test to write:** The rendered list contains only `button.recent-card` elements and clicking one calls the handler with that recipe.
+**What it fixes / does:** `open(recipe, trigger, { tip })` adds `.away` to the given element while the sheet is open and removes it on close. `main.ts` passes the result region when the trigger is inside it, and nothing when the sheet opens from a saved or recent card.
+**Original bug:** new behaviour (Ryan's brief: no transition from card to modal)
+**Issue:** epic
+**Reference:** `src/ui/modal.ts` (`OpenOptions`), `openRecipe` in `src/main.ts`
+**Why it works this way:** The caller knows where the sheet came from; the sheet should not guess by walking the DOM.
+**Hand-code notes:** The CSS for `.away` is in §8; the JS is one class toggle each way.
+**Test to write:** Opening with `{ tip }` adds `.away`; close removes it.
 
-### Favourites remove via `currentTarget`
-
-**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** The remove handler reads `event.currentTarget.dataset.key`. The `pointer-events: none` rule on the SVG goes away.
-**Original bug:** BUGS_RESOLVED #4
-**Issue:** #30
-**Reference:** `src/ui/favourites.ts` (the `removeButton` listener)
-**Why it works this way:** `currentTarget` is always the element the listener is attached to, whatever child the pointer hit. The v1 `closest("remove-btn")` was missing its dot and the `pointer-events` rule only masked the `e.target` problem.
-**Hand-code notes:** Your issue #30 proposes `e.target.closest(".remove-btn")`, which also works; `currentTarget` is one fewer DOM walk and cannot miss. Use `data-key` (the identity key from section 4), not `data-name`.
-**Test to write:** Dispatch a click on the SVG inside the second remove button; the handler receives the second recipe's key.
-
-### Partial-failure notice
+### The sheet's pinned bar and session-only ticks
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** When the spin produced a result but some ingredient requests failed, a line under the card reads "Couldn't search for: olive oil, soy sauce" (`role="status"`, secondary text colour). When every ingredient failed, the connection message shows instead.
-**Original bug:** new behaviour, completing BUGS_RESOLVED #15
-**Issue:** create ("Distinguish network failure from no results")
-**Reference:** `src/ui/resultCard.ts` (`failedIngredients` in `renderResult`), `src/main.ts` (the two empty-candidate messages)
-**Why it works this way:** The `allSettled` change (section 2) means a spin can succeed with a gap. Saying so is cheaper than a retry and keeps the user from thinking an ingredient was ignored. Note: a misspelled ingredient is not a failure, it is an empty result list, and gets no notice. Manual round 1 tripped on exactly that.
-**Hand-code notes:** One optional array into the render function, one `<p>` at the end of the card when it is non-empty.
-**Test to write:** `renderResult` with `failedIngredients: ["olive oil"]` renders the status line with that text; without it, no `.search-note` exists.
+**What it fixes / does:** The sheet is a flex column: a scrolling body and a bar with Save, Print, Close that never scrolls away. Ingredients are `<input type="checkbox">` rows with a running "3 of 16"; ticks are kept only in the DOM while the sheet is open and reset on every open. Save in the bar lights green and reports `'full'` as a status line; Print reports a blocked pop-up as a status line.
+**Original bug:** BUGS_RESOLVED #17 (print); the structure is B's, from Ryan's brief
+**Issue:** epic
+**Reference:** `src/ui/modal.ts` (`fill`, `updateCount`, the bar listeners)
+**Why it works this way:** With the phone on the counter the three actions must be reachable with a thumb. Ticks answer "what have I added to the pan"; persisting them would need a key per recipe and a reset affordance for no gain.
+**Hand-code notes:** Reset ticks by rebuilding the list in `fill`, which `open` always calls. The count is `querySelectorAll(':checked').length`.
+**Test to write:** Two ticks give "2 of 3" and reopening clears them; the bar's three buttons follow the content in document order.
 
-### Full-favourites notice
-
-**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** When `add()` returns `'full'`, a note appears under the save button ("Favorites are full (50). Remove one to save this recipe.") and the button stays enabled.
-**Original bug:** BUGS_RESOLVED #9 (UI half)
-**Issue:** create ("Cap favourites")
-**Reference:** `src/ui/resultCard.ts` (the `saveButton` click handler)
-**Why it works this way:** The cap needs a visible reason, or the save button appears broken.
-**Hand-code notes:** A hidden `<p role="status">` after the button; toggle `hidden` on the result string.
-**Test to write:** With an `onSave` that returns `'full'`, clicking save leaves the button enabled and shows a note matching `/full/i`.
-
-### "Clear seen history" naming and confirmation
+### Favourites remove via `currentTarget`, keyboard-reachable recent cards
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** The reset button is labelled "Clear seen history", with a hint beneath ("Lets previously shown recipes come back."), `aria-label` "Clear the list of recipes you have already been shown", and a two-second "History cleared" confirmation that swaps only the text span so the icon stays.
-**Original bug:** BUGS_RESOLVED #11 (the icon loss) plus a naming fix from manual testing
-**Issue:** #39 for the label swap; the rename has none
-**Reference:** `src/ui/clearHistory.ts` (`wireClearHistory`), `index.html` (the `.clear-history` block)
-**Why it works this way:** "Reset Suggestions" promised a new suggestion; the button only clears a list. Manual round 2 expected a different recipe after reset and got the same one (a tie, see section 3), and the name made that feel like a bug. Swapping only a `<span>` means the SVG survives and the accessible name does not change mid-interaction.
-**Hand-code notes:** Wrap the label text in a `<span id="clear-history-text">`. The handler is eight lines with a `setTimeout` and a `clearTimeout` guard for double clicks.
-**Test to write:** Click sets the span to "History cleared" and leaves the SVG in place; after 2000 ms it reads "Clear seen history" again.
+**What it fixes / does:** The remove handler reads `event.currentTarget.dataset.key`; no `pointer-events: none` crutch. Recently viewed cards are `<button>`s.
+**Original bug:** BUGS_RESOLVED #4, #18
+**Issue:** #30, create ("Recently viewed cards are mouse-only")
+**Reference:** `src/ui/favourites.ts`, `src/ui/recentlyViewed.ts`
+**Why it works this way:** `currentTarget` is always the element the listener is on. A real button gets the tab stop and Enter/Space for free.
+**Hand-code notes:** Use `data-key` (the identity key from §4), not `data-name`.
+**Test to write:** A click on the SVG inside the second remove button calls the handler with the second key; every recent card is a `button`.
 
-### Print via DOM APIs with a pop-up guard
-
-**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** `window.open("", "_blank")`; if it returns `null`, show "Printing was blocked. Allow pop-ups for this site and try again." in the modal and stop. Otherwise set `document.title`, append a `<style>` with the print CSS, build the body with `createElement`, call `print()` after a short delay, and close on `afterprint`.
-**Original bug:** BUGS_RESOLVED #17
-**Issue:** create ("Print window can be null")
-**Reference:** `src/ui/print.ts` (`buildPrintDocument`, `printRecipe`), `src/styles/print.css`
-**Why it works this way:** v1 threw on `.document` under a pop-up blocker, used the deprecated `document.write`, and called `close()` right after `print()`, which can close the window before the dialog opens in browsers where `print()` does not block. Building from the `Recipe` object (not the modal's `innerHTML`) also means the print-out does not depend on what the modal happens to show.
-**Hand-code notes:** Keep the exact v1 print stylesheet; it was good. Pass the new window's `document` into the builder so `createElement` creates nodes in the right document. A print stylesheet on the modal itself would avoid pop-up permission entirely; that is a reasonable alternative to consider.
-**Test to write:** `buildPrintDocument(doc, recipe)` on a blank document yields the title, category, ingredient `li`s with measurements, step `li`s and the footer, and a `<script>` in the recipe name does not produce a script element.
-
-### Disable the spin button while a spin is in flight
+### The save lamp's three answers
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** `button.disabled = true` and an `inFlight` flag for the duration of a spin; both reset in `finally`.
-**Original bug:** BUGS_RESOLVED #16
-**Issue:** create ("Concurrent spins")
-**Reference:** `src/main.ts` (`setSpinning`, `spinInFlight`)
-**Why it works this way:** `pointer-events: none` stops the mouse but not Enter or Space on the focused button. Two concurrent spins both wrote the result region and both added to the seen list.
-**Hand-code notes:** `finally` is the important part; an exception must re-enable the button.
-**Test to write:** (behavioural, in the smoke list) Press Enter on the spin button twice quickly; only one result renders and the seen list gains one entry.
+**What it fixes / does:** Save on the card and in the sheet calls the favourites store and reads one of `'added' | 'exists' | 'full'`. `added` lights the lamp; `exists` renders it lit on arrival; `full` leaves it unlit and shows "Saved recipes are full (50). Remove one to save this." Removing a favourite unlights the matching card button by key.
+**Original bug:** BUGS_RESOLVED #9, #11
+**Issue:** create ("Cap favourites"), #39
+**Reference:** `src/ui/resultCard.ts` (`setSavedState`, `markResultSaved`, `markResultUnsaved`), the `saveButton` listener in `src/ui/modal.ts`
+**Why it works this way:** `aria-pressed` is the single source of truth for "saved", so the visual and the announced state cannot disagree. A string result rather than a boolean lets the UI tell "full" from "already saved".
+**Hand-code notes:** Never set `disabled` on the lamp; a disabled button leaves the tab order and its colour is overridden.
+**Test to write:** `onSave` returning each of the three values produces the matching state and note.
 
-### Labels that do not drift
+### "Clear seen history" and labels that do not drift
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** The spin button's idle label is read from the HTML at startup and restored verbatim after a spin. The save button uses one saved label ("Saved to Favorites", filled heart) whether the recipe was already saved or was saved just now.
-**Original bug:** BUGS_RESOLVED #11
+**What it fixes / does:** The button is labelled "Clear seen history", with a hint beneath and a two-second "History cleared" swap of the text span only, so the icon stays. The Spin button's idle label is read from the HTML at startup and restored after a spin.
+**Original bug:** BUGS_RESOLVED #11, plus the rename from manual round 2
 **Issue:** #39
-**Reference:** `src/main.ts` (`SPIN_IDLE_LABEL`), `src/ui/resultCard.ts` (`setSavedState`)
-**Why it works this way:** Two copies of a label drift; one source cannot. Reading it from the DOM makes the HTML the source of truth and the JS cannot disagree with it.
-**Hand-code notes:** `const idle = btnText.textContent` at startup. Decide on the 🎰 once and put it in the HTML.
-**Test to write:** After a spin the button text equals the text it had before.
-
-### Three distinct empty-result messages
-
-**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** "Enter at least one ingredient" for blank input; "Nothing found. Try different ingredients." for an empty candidate list with no failures; "Couldn't reach the recipe service. Check your connection and try again." when every ingredient request failed; and a fourth for the rare case where candidates existed but every detail lookup failed.
-**Original bug:** BUGS_RESOLVED #14, #15
-**Issue:** create (both issues)
-**Reference:** `src/main.ts` (`spin`), `src/ui/resultCard.ts` (`renderMessage`)
-**Why it works this way:** Each message maps to a different thing the user can do about it. Sections 2 and 3 produce the signals (`failedIngredients`, `null` pick); this item just reads them.
-**Hand-code notes:** Four `showMessage` calls in the spin function, each behind the condition described. `renderMessage` is `container.replaceChildren(p)` with a text node.
-**Test to write:** (behavioural) Offline spin shows the connection message; `unobtainium` shows "Nothing found".
+**Reference:** `src/ui/clearHistory.ts`, `SPIN_IDLE_LABEL` in `src/main.ts`
+**Why it works this way:** "Reset Suggestions" promised a new suggestion; the button only clears a list. One source for a label cannot drift.
+**Hand-code notes:** Wrap the label text in a `<span>`; the handler is eight lines with a `clearTimeout` guard.
+**Test to write:** Click sets the span to "History cleared" and keeps the SVG; after 2000 ms it reads "Clear seen history" again.
 
 ---
 
 ## 6. Accessibility
 
-What v1 already did well is preserved: skip link, `aria-live` result region, labelled icon buttons, `aria-hidden` SVGs, focus trap, Escape and backdrop close. These are the additions and the two removals.
+What v1 already did well is preserved: skip link, `aria-live` result region, labelled icon buttons, `aria-hidden` SVGs, focus trap, Escape and backdrop close. These are the additions and the two removals, as they stand in the final UI.
 
-### Contrast tokens, with the measured ratios
-
-**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** Three colour changes, each a token in `tokens.css`:
-
-| Token | Value | Replaces | Ratio |
-|---|---|---|---|
-| `--color-on-accent` | `#1a1a2e` (navy) as the foreground on the orange | white | 6.02:1 on `#ff6b35`, 4.73:1 on the pulse end `#e55a25` (white was 2.84:1 and 3.61:1) |
-| `--color-text-dim` | `#8292ac` for reset/remove button text and borders | `#5a6a8a` | 5.04:1 on the card surface (was 2.92:1) |
-| `--color-placeholder` | `#a0a0c0` for input placeholder text | `#5a6a8a` | 4.93:1 on the input background (was 2.30:1) |
-
-The orange itself is unchanged.
-**Original bug:** none in the list; found while measuring
-**Issue:** #34 (CSS custom properties) is the natural home
-**Reference:** `src/styles/tokens.css`, and the usages in `form.css`, `base.css`, `result.css`, `modal.css`, `print.css`
-**Why it works this way:** The README claimed AA; the primary button and the dim text did not meet it. Darkening the orange would change the identity; changing what sits on it does not. Manual round 1 confirmed the navy-on-orange button looks right.
-**Hand-code notes:** Put every colour in `:root` custom properties first (your #34), then change three values. The ratios were computed with the WCAG relative-luminance formula; a quick script is in `../REPORT.md` §1 territory if you want to recheck.
-**Test to write:** None automated. Check the three pairs in a contrast tool once.
-
-### `prefers-reduced-motion`
+### Contrast on the dark room, measured
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** A media query that sets `animation: none` on the spinning button, result card, modal card and overlay, and `transition: none` and `transform: none` on the hover-lift elements.
-**Original bug:** none in the list (§10 gap)
+**What it fixes / does:** Every text token measured against every surface it sits on. Lowest pair: text-3 (`#948aae`) on raised (`#261d38`) at 5.0:1. Gold text on the dark surfaces 11.9:1; dark text on gold 11.3:1; green 11.2:1; coral 7.1:1; amber 9.9:1. The full table is in `design/SYSTEM.md`.
+**Original bug:** none in the list; the v1 button was 2.84:1
+**Issue:** #34 is the natural home
+**Reference:** `src/styles/tokens.css` (ratios in the comments)
+**Why it works this way:** Three text levels on three surfaces is nine pairs; naming them once in the token file means nobody re-measures by hand.
+**Hand-code notes:** If you change a surface, re-measure text-3 on it first; it is the only pair with little headroom.
+**Test to write:** None automated.
+
+### Focus rings that survive gold
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it fixes / does:** `:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px }` everywhere, except on the gold Spin button where the ring is text-1, and inside the sheet bar where the offset is negative so the ring stays inside the rounded panel.
+**Original bug:** none in the list
+**Issue:** epic
+**Reference:** `src/styles/base.css`, `.btn-spin:focus-visible` in `shell.css`, `.bar-btn:focus-visible` in `sheet.css`
+**Why it works this way:** A gold ring on a gold button is invisible; a ring outside a clipped panel is cut off.
+**Hand-code notes:** Use `:focus-visible`, not `:focus`, so mouse clicks do not paint rings.
+**Test to write:** None automated; the keyboard walk in `docs/MANUAL_TEST.md` Round 3 covers it.
+
+### The dial is a radio group
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it fixes / does:** Ten `<input type="radio" name="vibe">` inside labels in a `<fieldset>` with a `<legend>`. Screen readers announce "Vibe, radio group, Comfort, 3 of 10"; Tab enters at the checked one; the arrow keys step. The visually hidden radio sits over its label with `opacity: 0`, not `display: none`, so it stays in the tab order.
+**Original bug:** none; replaces a native `<select>` without losing its semantics
+**Issue:** epic
+**Reference:** `src/ui/vibeSelector.ts`
+**Why it works this way:** The alternative, buttons with `role="radio"` and `aria-checked`, needs every behaviour re-implemented in JS and still announces worse.
+**Hand-code notes:** Centre the set item by setting `rail.scrollLeft`; `scrollIntoView` moves the page's focus starting point and broke the skip link on load.
+**Test to write:** Ten radios exist; ArrowRight from Comfort selects Hearty and moves focus; ArrowLeft at Lazy stays.
+
+### Skip link that lands
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it fixes / does:** `<main id="main-content" tabindex="-1">` so the skip link moves focus into the main area in every browser, with `#main-content:focus { outline: none }` because the ring would wrap the whole page.
+**Original bug:** none; found by the headless keyboard walk
+**Issue:** epic
+**Reference:** `index.html`, `src/styles/base.css`
+**Why it works this way:** Without `tabindex`, some browsers scroll to the fragment but leave focus where it was.
+**Hand-code notes:** One attribute, one rule.
+**Test to write:** None automated; Round 3 keyboard walk step 1.
+
+### `prefers-reduced-motion`, per animation
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it fixes / does:** Every animation has a named fallback: the reel does not move and resolves `'instant'`; the card's pay-out and tip become a dim; the sheet appears in place; the save glow and hover lifts are instant; scrolling is `auto`. Each component's `@media (prefers-reduced-motion: reduce)` block sits at the end of its own stylesheet; the reel and the scroll also check `matchMedia` in JS so no timers run.
+**Original bug:** none in the list (§10 gap); production issue #36
 **Issue:** #36
-**Reference:** `src/styles/motion.css`
-**Why it works this way:** The pulse, slide and fade are decorative. Targeting the specific selectors rather than `* { animation: none !important }` keeps the rule readable and avoids surprising any future animation that is functional.
-**Hand-code notes:** Copy the block; adjust selectors to your class names.
-**Test to write:** None automated. Toggle the OS setting and spin.
+**Reference:** the end of each `src/styles/*.css`, `reduceMotion` in `src/main.ts`, the motion table in `design/SYSTEM.md`
+**Why it works this way:** A global `* { animation: none !important }` would also kill the fallbacks you want to keep, and hides which animations exist. Per component, the fallback is next to the rule it cancels.
+**Hand-code notes:** Read `matchMedia('(prefers-reduced-motion: reduce)').matches` once at startup and pass it in; do not re-query inside hot paths.
+**Test to write:** The reel test with `reduceMotion: true` resolves `'instant'` and never sets the `spinning` class; the scroll test passes `behavior: 'auto'`.
 
 ### Two ARIA attributes removed
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** `aria-label="Select a cooking vibe"` on `#vibe` is gone, so the visible `<label>` ("What's the vibe?") is the accessible name. `aria-describedby="modal-body"` on the dialog is gone, so screen readers do not read the whole modal, buttons included, as a description on open.
+**What it fixes / does:** `aria-label="Select a cooking vibe"` on the old select is gone (the fieldset's legend is the name now), and `aria-describedby="modal-body"` on the dialog is gone, so screen readers do not read the whole sheet, buttons included, as a description on open. `aria-labelledby="modal-title"` remains.
 **Original bug:** none in the list (§10 gaps)
 **Issue:** none
-**Reference:** `index.html` (the `#vibe` select and `#recipe-modal` div)
-**Why it works this way:** An `aria-label` that differs from the visible label is a label-in-name mismatch (WCAG 2.5.3). `aria-describedby` pointing at a container that includes interactive controls is noise; pointing it at the steps list instead would read every step on open, which is worse. `aria-labelledby="modal-title"` remains and is enough.
+**Reference:** `index.html`
+**Why it works this way:** An `aria-label` that differs from the visible label is a label-in-name mismatch; a description that includes the controls is noise.
 **Hand-code notes:** Delete two attributes.
 **Test to write:** None.
+
+### Live region and the reel
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it fixes / does:** The result region keeps `aria-live="polite"` and `aria-atomic`; the reel is `aria-hidden` throughout because it is decoration for the same event the region announces. Notices and the exhausted state render inside the region so they are announced too; the exhausted message's inline button is a real `<button>`.
+**Original bug:** none; preserved from v1 and extended
+**Issue:** epic
+**Reference:** `index.html`, `src/ui/resultCard.ts`
+**Why it works this way:** Announcing the reel's rows would read six recipe names before the one that matters.
+**Hand-code notes:** Keep the reel outside the live region in the DOM.
+**Test to write:** None automated.
 
 ---
 
@@ -540,14 +576,25 @@ The chosen direction is C's skeleton with B's sheet structure, rendered in C's t
 **Hand-code notes:** Tokens: `--elevated`, `--line`, `--accent`, `--raised`, `--text-3`, `--text-1`, `--size-20`, `--reel-spin`, `--reel-land`, `--reel-max`, `--ease-out`. Rows are 76px in both the CSS and the JS constant; the loop keyframe moves exactly one copy (6 × 76 = 456px) per 560ms. The tricky bit is the landing: read the strip's current `translateY` from `getComputedStyle(strip).transform` (a `matrix(a,b,c,d,tx,ty)` string; `ty` is the sixth number), set it as an inline transform with `transition: none`, force a reflow (`void strip.offsetHeight`), then set the final offset `-(16 × 76)px` with `transition: transform 900ms var(--ease-out)`. Keep the reel `aria-hidden`; the result region is the live region. Reading the three durations from `getComputedStyle(document.documentElement).getPropertyValue('--reel-spin')` with `parseFloat` keeps the timing in CSS.
 **Test to write:** With fake timers: a settle called at once resolves only after 1.7 s with `'landed'`; a settle at 2.0 s resolves immediately with `'pulsed'`; under reduced motion it resolves with `'instant'` and the `spinning` class is never set.
 
+### Surprise me link and the exhausted notice
+
+**Decision:** [ ] Keep  [ ] Consider  [ ] Skip
+**What it does:** Under Spin, a centred text link "Surprise me" in text-2 at 15, underlined, text-1 on hover, text-3 without the underline while a spin is in flight. The exhausted state is a plain `p.message.exhausted` in text-2 with an inline gold `button.btn-inline` ("clear history"), underlined; not coral, because nothing is wrong.
+**Original bug:** none; §5 "Surprise me" and "Three result states"
+**Issue:** create ("Surprise me"), ("Exclude seen recipes")
+**Reference:** `src/styles/shell.css` (`.surprise`, `.btn-link`), `src/styles/result.css` (`.message.exhausted`, `.btn-inline`)
+**Why it works this way:** Gold is for the machine, so a random roll is a text link, not a second primary. The exhausted message keeps its action inline so the fix is one tap.
+**Hand-code notes:** Tokens: `--text-2`, `--text-1`, `--text-3`, `--accent`, `--size-15`. Both are plain buttons styled as text; keep `type="button"` and a focus ring.
+**Test to write:** `renderExhausted` renders the sentence with a working inline button.
+
 ### Result card and the Save lamp
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it does:** `article.card`: 16:9 image, title at 30 in the display face, description, three pills ("4 of 16 ingredients", "62% score", "71% comfort"), a grid of gold "View recipe" and the Save lamp, a ghost "Spin again", and an optional coral "Couldn't search for: ..." line beneath. Save is a quiet ghost button that lights green with a halo when saved and stays lit if the recipe was already saved.
+**What it does:** `article.card`: 16:9 image, title at 30 in the display face, description, three pills ("4 of 16 ingredients", "62% score", "71% comfort"), a grid of gold "View recipe" and the Save lamp, a ghost "Spin again", and an optional coral "Couldn't search for: ..." line beneath. The region above it can instead hold one of the non-pick messages, including the exhausted notice. Save is a quiet ghost button that lights green with a halo when saved and stays lit if the recipe was already saved.
 **Original bug:** BUGS_RESOLVED #3, #7, #9, #11 all still hold; this is their new skin
 **Reference:** `src/ui/resultCard.ts` (`renderResult`, `renderMessage`, `markResultSaved`, `markResultUnsaved`), `src/styles/result.css`
 **Why it works this way:** The card is a stepping stone to the sheet, so it stays plain; the one memorable thing on it is the lamp. `aria-pressed` drives both the visual and the announced state, so there is one source of truth for "saved".
-**Hand-code notes:** Tokens: `--elevated`, `--line`, `--raised`, `--accent`, `--on-accent`, `--state`, `--glow`, `--notice`, `--size-30`, `--save-glow`, `--card-tip`, `--ease-in`. The lamp is `box-shadow: 0 0 0 1px var(--state), 0 0 18px var(--glow)` with the heart's `fill: currentColor`; never `filter: blur`, which repaints the whole layer for the length of the transition. The tricky bit: the card's `transition` must list only `transform` and `opacity` so the `.away` tip (used when the sheet opens) and the `payout` arrival keyframe do not fight. `transform-origin: 50% 0` makes the tip hinge at the top.
+**Hand-code notes:** Tokens: `--elevated`, `--line`, `--raised`, `--accent`, `--on-accent`, `--state`, `--glow`, `--notice`, `--size-30`, `--save-glow`, `--card-tip`, `--ease-in`. The ingredients pill reads "— ingredients" when the spin had no input (Surprise me). After render, `scrollCardIntoView` (§5) brings the whole card on screen. The lamp is `box-shadow: 0 0 0 1px var(--state), 0 0 18px var(--glow)` with the heart's `fill: currentColor`; never `filter: blur`, which repaints the whole layer for the length of the transition. The tricky bit: the card's `transition` must list only `transform` and `opacity` so the `.away` tip (used when the sheet opens) and the `payout` arrival keyframe do not fight. `transform-origin: 50% 0` makes the tip hinge at the top.
 **Test to write:** Renders name, image, description and the three pills from a `ScoredRecipe`; a name containing `<b>` renders as text; `onSave` returning `'added'` lights the lamp, `'exists'` renders it lit, `'full'` leaves it unlit and shows the note.
 
 ### Recipe sheet
@@ -589,3 +636,33 @@ The chosen direction is C's skeleton with B's sheet structure, rendered in C's t
 **Why it works this way:** Each component owns its own fallback next to the rule it cancels, so a future animation cannot be forgotten by a global `* { animation: none }`. The reel also checks `matchMedia` in JS so no timers run under reduced motion.
 **Hand-code notes:** Under reduced motion the card tip becomes a 40% dim with no rotation; the reel sets no `spinning` class and the strip jumps to its final offset.
 **Test to write:** The reel test with `reduceMotion: true` resolves `'instant'` and never sets `spinning`.
+
+---
+
+## 9. Suggested build order for the production app
+
+The order the sandbox was built in, with the reason each step comes before the next. Each step leaves the app working, so you can stop at any line and ship. Tests are optional at every step; where one is cheap and catches a real v1 bug, it is named.
+
+**1. Repo hygiene first (§7).** `.gitattributes`, `.editorconfig`, delete the dead code, convert the three global scripts to ES modules with `<script type="module">`. Everything after this is easier to diff and, if you want tests later, modules are the precondition. Half an hour.
+
+**2. The `Recipe` shape and `normalizeMeal` (§1).** Add `instructions`, `id`, `area`, drop `time`. This is one function and it is the single highest-impact change: the vibe engine starts working the moment `instructions` exists. Do it before touching scoring so you can see scores move. First test if you add any: `normalizeMeal` populates `instructions`.
+
+**3. Scoring (§3), in this order:** keep `scoreRecipeForVibe` as it is and retune `simple` to 0.3; split the scored result into `{ recipe, matchedCount, ingredientMatch, vibeScore, blendedScore, seen }`; add the three-level comparator; then exclusion and the tagged `pickRecipe`. Each is pure and each changes what the card shows, so do them before the card. The comparator before exclusion, because exclusion makes ties more common (fewer candidates).
+
+**4. Storage (§4).** Guarded parse and the shape validator first (the page stops dying on bad data), then identity by `id ?? name`, then the caps. Do this before the UI because the UI's "saved" states all read through `sameRecipe`. Keep the v1 key names; your existing favourites keep working.
+
+**5. The API layer (§2).** `encodeURIComponent` and `parseIngredients`, then `response.ok` and `allSettled` with `failedIngredients`, then interleave and dedup, then the timeout, then the session cache. Each is independent; the cache last because it is the only one that adds a storage concern. By the end of this step a spin is fast, fair and honest about failures, still with the old UI.
+
+**6. The result card and the three non-pick states (§5).** Rebuild the card with `el()`: the honest pills, the save lamp with its three answers, "Spin again", and the four messages plus the exhausted state. This is where `innerHTML` leaves the codebase. It can wear the v1 CSS for now.
+
+**7. The sheet (§5, §8).** Focus return, the card tip hook, checkable ingredients, the pinned bar, print via DOM. Do the behaviour against the v1 modal markup first, then restyle; the focus tests do not care about the CSS.
+
+**8. Tokens and the skin (§8).** Only now the palette, the fonts and the component styles. By this point every behaviour exists and is testable, so the restyle is pure CSS and cannot break logic. Start with `tokens.css`, then the sheet (the star), then the card, then the shell.
+
+**9. The dial (§8).** It replaces the `<select>` and depends on nothing but the vibe keys. After the skin so it is built once, in the final look.
+
+**10. The reel (§8).** Last of the big pieces because it is the only one that touches timing. It plugs into the spin flow you built in step 6 with three calls: `start()` before the search, `feed()` after the filter results, `settle()` after the pick. Add the scroll-to-card at the same time; it is the arrival the reel sets up.
+
+**11. Surprise me, cook time, accessibility pass (§5, §6).** Surprise me reuses everything (`random()` on the client, `surpriseMe`, `showPick`). The cook-time estimator is pure and only adds a pill. The accessibility pass is a keyboard walk and a contrast check; it goes last because it checks the whole.
+
+**What to skip if you want a shorter path:** the cache (step 5, last part), the reel (step 10) and Surprise me (step 11) are the three things the app works without. Everything else fixes a bug or a lie in the current app.

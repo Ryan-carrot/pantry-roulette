@@ -6,14 +6,14 @@ A local, experimental rebuild of [Pantry Roulette](https://github.com/Ryan-carro
 
 The deliverable is the handoff pack in [`handoff/`](handoff/). Start there if you are here to build.
 
-What the app does: you type a comma-separated list of ingredients, pick one of ten vibes (Lazy, Impressive, Hearty, Fun, Healthy, Comfort, Fancy, Elegant, Classic, Simple) and spin. It asks [TheMealDB](https://www.themealdb.com) for meals containing each ingredient, merges and dedups the hits, fetches details for up to 30, scores each one 50/50 on ingredient overlap and vibe fit, penalises recipes you have already been shown, and renders the best pick. Favourites, a seen list and a recently-viewed strip live in localStorage. No backend, no account.
+What the app does: you type a comma-separated list of ingredients, pick one of ten vibes (Lazy, Impressive, Hearty, Fun, Healthy, Comfort, Fancy, Elegant, Classic, Simple) and spin. It asks [TheMealDB](https://www.themealdb.com) for meals containing each ingredient, merges and dedups the hits, fetches details for up to 30, scores each one 50/50 on ingredient overlap and vibe fit, leaves out recipes you have already been shown (and says so when you have seen them all), and renders the best pick. "Surprise me" skips the input and rolls a random recipe instead. Favourites, a seen list and a recently-viewed strip live in localStorage. No backend, no account.
 
 ## Run and test
 
 ```sh
 npm install
 npm run dev        # http://localhost:5173
-npm test           # vitest run (162 tests)
+npm test           # vitest run (204 tests)
 npm run typecheck  # tsc --noEmit
 npm run build      # tsc --noEmit && vite build → dist/ (local check only)
 npm run preview    # serve dist/ on http://localhost:4173
@@ -36,16 +36,19 @@ src/
   types.ts                Recipe, ScoredRecipe, VibeKey, VibeProfile, MealDB shapes
   api/mealdb.ts           fetch client (injected fetch, 15s timeout), interleave, dedup, cap
   api/loadRecipes.ts      stubs → recipes via the session cache, one lookup per unseen id
+  api/surprise.ts         one random recipe, re-rolled up to three times past seen ones, cached
   core/cookTime.ts        duration phrases → under-30 / 30-60 / over-60 bucket, or null (pure)
   core/identity.ts        recipeKey / sameRecipe / isSeen: id with name fallback for v1 entries
   core/normalize.ts       MealDB meal → Recipe (pure)
   core/vibes.ts           vibeProfiles (from v1, one weight retuned) + scoreRecipeForVibe (pure)
-  core/scoring.ts         parseIngredients, ingredient overlap, blend, seen penalty, tiebreak, pick (pure)
+  core/scoring.ts         parseIngredients, overlap, blend, seen exclusion, tiebreak, pick → pick / exhausted / empty (pure)
+  core/measurements.ts    measure string → quantity and unit; the servings spike, not wired (pure)
   storage/                typed localStorage wrappers; every read is guarded and validated
   ui/el.ts                typed createElement helper and inline SVG icons
   ui/vibeSelector.ts      the vibe dial: ten radios on a snap-scroll rail, with a "see all" grid
   ui/reel.ts              the spin reel: skeleton rows, fed by candidates, lands on the pick or pulses
-  ui/resultCard.ts        the pay-out card: pills, View recipe, the Save lamp, Spin again, notices
+  ui/resultCard.ts        the pay-out card: pills, View recipe, the Save lamp, Spin again, notices, the exhausted state
+  ui/scroll.ts            bring the whole card into view after a spin
   ui/clearHistory.ts      "Clear seen history" button with its two-second confirmation
   ui/favourites.ts        favourite cards
   ui/recentlyViewed.ts    recently viewed buttons
@@ -79,6 +82,7 @@ Every decision made during the rebuild, with its reasoning, is in [`handoff/DECI
 ## Other docs
 
 - [`design/SYSTEM.md`](design/SYSTEM.md): the design system the UI is built on; tokens, type, motion, components.
+- [`design/SERVINGS_SPIKE.md`](design/SERVINGS_SPIKE.md): can MealDB measures be scaled? Go, with caveats; nothing built.
 - [`design/mockups/`](design/mockups/): the three directions Ryan chose from.
 - [`handoff/`](handoff/): the pack to take to the production repo.
 - [`BUGS_RESOLVED.md`](BUGS_RESOLVED.md): the 24 bugs, each mapped to the commit and file that fixes it. Primary input to the hand-code spec.
@@ -89,7 +93,7 @@ Every decision made during the rebuild, with its reasoning, is in [`handoff/DECI
 
 ## Manual smoke test
 
-See `docs/MANUAL_TEST.md`, Round 3. It covers the spin, the dial, the sheet, a keyboard-only walk, reduced motion, and two break-it-on-purpose checks, each with the expected result.
+See `docs/MANUAL_TEST.md`, Rounds 3 and 4. It covers the spin, the dial, the sheet, a keyboard-only walk, reduced motion, and two break-it-on-purpose checks, each with the expected result.
 
 ## Licence
 

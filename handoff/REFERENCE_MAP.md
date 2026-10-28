@@ -35,14 +35,18 @@ Where each production (v1.0.1, `ed443d1`) file or function went in the sandbox. 
 | empty guards and messages ("🥄", "😬 Nothing found") | 530–533, 552–556 | `src/main.ts`: the four `showMessage()` branches; `src/ui/resultCard.ts`: `renderMessage()` |
 | `console.log("Raw meals pool:", ...)` | 547 | Removed |
 | inline scoring (`matched`, `ingredientScore`, `combinedScore`, seen `× 0.3`) | 571–585 | `src/core/scoring.ts`: `scoreRecipe()` → `ScoredRecipe` |
-| `.filter(score > 0).sort(...)` | 586–591 | `src/core/scoring.ts`: `rankRecipes()` with `compareScored()` |
-| `scored[0]` or random fallback | 593–597 | `src/core/scoring.ts`: `pickRecipe()` (returns `null` on empty pool; RNG injected) |
+| `.filter(score > 0).sort(...)` | 586–591 | `src/core/scoring.ts`: `rankRecipes()` with `compareScored()`; seen recipes are excluded here, not penalised |
+| `scored[0]` or random fallback | 593–597 | `src/core/scoring.ts`: `pickRecipe()` → `PickResult` (`'pick'`, `'exhausted'` when every candidate is seen, `'empty'`); random fallback from unseen only, RNG injected |
 | result card template literal → `resultDiv.innerHTML` | 605–635 | `src/ui/resultCard.ts`: `renderResult(container, scored, { isSaved, vibeLabel, onSave, onView, onSpinAgain, failedIngredients })` |
 | save-button click (`"Saved! ✅"`) | 643–650 | `renderResult`'s save listener and `setSavedState()` |
 | view-recipe-button click | 653–655 | `renderResult`'s `onView(trigger)` → `main.ts`: `openRecipe()` |
 | page-load `renderFavorites(); renderRecentlyViewed();` | 660–662 | `src/main.ts`: `refreshFavourites()`, `refreshRecentlyViewed()` |
 | reset-seen button handler (`"✅ Reset!"` / `"🔄 Reset Suggestions"`) | 664–671 | `src/ui/clearHistory.ts`: `wireClearHistory(button, textSpan, onClear)` |
 | identity by `name` everywhere | throughout | `src/core/identity.ts`: `recipeKey()`, `sameRecipe()`, `isSeen()` |
+| `resultDiv.focus()` after render | 637–639 | `src/main.ts`: `showPick()` focuses with `preventScroll` then `src/ui/scroll.ts`: `scrollCardIntoView()` |
+| (none) | — | `src/api/surprise.ts`: `surpriseMe()` and `createMealDbClient().random()` (new: Surprise me) |
+| (none) | — | `src/ui/resultCard.ts`: `renderExhausted()` (new: every candidate seen) |
+| (none) | — | `src/core/measurements.ts`: `parseMeasure()` (new: servings spike, not wired) |
 | (none) | — | `src/storage/lookupCache.ts`: `createLookupCache()` (new: sessionStorage cache of normalised lookups) |
 | (none) | — | `src/main.ts`: `resolveStorage()` (new: in-memory fallback when web storage throws) |
 
@@ -69,7 +73,7 @@ Where each production (v1.0.1, `ed443d1`) file or function went in the sandbox. 
 | `#result` static div (gets `tabindex="-1"` from JS) | same markup with `tabindex="-1"` in the HTML; `#reel` sits above it |
 | `#reset-seen-btn` "Reset Suggestions" | `#clear-history-btn` "Clear seen history" with `#clear-history-text` span and `#clear-history-hint` |
 | (none) | `.sheet-bar` with `#modal-save-btn`, `#modal-print-btn`, `#modal-close-btn` pinned to the sheet's bottom edge |
-| `#btn-text` "Spin the Pantry" (JS adds 🎰 later) | `#btn-text` "Spin the Pantry 🎰" (JS reads it back) |
+| `#btn-text` "Spin the Pantry" (JS adds 🎰 later) | `#btn-text` "Spin" (JS reads it back); `#surprise-btn` "Surprise me" beneath |
 | `.modal-meta` with static `<span class="meta-time">30 mins</span>` | `#modal-meta`, filled by JS with ingredient count, cuisine and the cook-time bucket from `src/core/cookTime.ts`: `estimateCookTime()` (a dash when null) |
 | `<select id="vibe" aria-label="Select a cooking vibe">` | `<fieldset id="vibe">` filled by `src/ui/vibeSelector.ts`: `createVibeSelector()`, ten radios on a snap-scroll rail with a "see all" grid |
 | `#recipe-modal` with `aria-describedby="modal-body"` | without `aria-describedby` |
@@ -118,3 +122,6 @@ The v1 stylesheet maps onto the new token-driven files. `design/SYSTEM.md` is th
 | `tests/modal.test.ts` | fill, meta row with dash, ticks and reset, bar order, focus return on three paths, trap, save from bar, blocked print, card tip |
 | `tests/favourites.test.ts`, `tests/recentlyViewed.test.ts` | lamp, remove by key incl. legacy, view trigger; strip of buttons |
 | `tests/cookTime.test.ts` | durations, ranges, overnight, buckets, max not sum, step heuristic, codec |
+| `tests/scroll.test.ts` | nearest first, nudge when clipped, instant under reduced motion |
+| `tests/surprise.test.ts` | random.php URL, re-roll past seen, three-try ceiling, cache by id, failure → null |
+| `tests/measurements.test.ts` | integers, decimals, fractions, mixed numbers, ranges, units, vague units, non-quantities |
