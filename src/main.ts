@@ -18,6 +18,7 @@ import { renderRecentlyViewed } from './ui/recentlyViewed';
 import { createReel } from './ui/reel';
 import { createVibeSelector } from './ui/vibeSelector';
 import { markResultSaved, markResultUnsaved, renderMessage, renderResult } from './ui/resultCard';
+import { scrollCardIntoView } from './ui/scroll';
 
 /** Read a motion duration token so the reel's timing is tuned in tokens.css, not here. */
 function motionMs(token: string, fallback: number): number {
@@ -182,7 +183,9 @@ async function spin(): Promise<void> {
     });
     resultRegion.classList.toggle('pulse', outcome === 'pulsed');
     resultRegion.classList.remove('hidden');
-    resultRegion.focus();
+    resultRegion.focus({ preventScroll: true });
+    const card = resultRegion.querySelector<HTMLElement>('.card');
+    if (card) scrollCardIntoView(card, { viewportHeight: window.innerHeight, reduceMotion });
     refreshRecentlyViewed();
   } catch {
     showMessage('Something went wrong. Try again.', 'notice');
