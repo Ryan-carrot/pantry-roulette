@@ -61,7 +61,8 @@ async function spin(storage: StorageLike, fetchImpl: FetchLike): Promise<string 
   const ingredients = ['chicken', 'garlic', 'lemon'];
   const search = await findCandidates(client, ingredients);
   const recipes = await loadRecipes(client, cache, search.candidates);
-  return pickRecipe(recipes, ingredients, 'lazy', seen.asSet())?.recipe.name;
+  const result = pickRecipe(recipes, ingredients, 'lazy', seen.asSet());
+  return result.kind === 'pick' ? result.pick.recipe.name : undefined;
 }
 
 describe('spin determinism', () => {

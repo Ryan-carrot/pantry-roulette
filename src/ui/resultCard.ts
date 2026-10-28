@@ -80,6 +80,22 @@ export function renderMessage(container: HTMLElement, message: string, kind: 'pl
   replaceChildren(container, [el('p', { class: kind === 'notice' ? 'message notice' : 'message' }, [message])]);
 }
 
+/**
+ * Every candidate for these ingredients has been seen. Not an error: the
+ * fix is to clear history, so the action sits inline in the message.
+ */
+export function renderExhausted(container: HTMLElement, onClear: () => void): void {
+  const button = el('button', { type: 'button', class: 'btn-inline' }, ['clear history']);
+  button.addEventListener('click', onClear);
+  replaceChildren(container, [
+    el('p', { class: 'message exhausted' }, [
+      "You've seen everything for these ingredients — ",
+      button,
+      ' to start over.',
+    ]),
+  ]);
+}
+
 /** Unlight the card's save button after a favourite is removed by key. */
 export function markResultUnsaved(container: HTMLElement, key: string): void {
   const button = container.querySelector<HTMLButtonElement>('#save-btn');

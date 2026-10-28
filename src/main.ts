@@ -17,7 +17,7 @@ import { printRecipe } from './ui/print';
 import { renderRecentlyViewed } from './ui/recentlyViewed';
 import { createReel } from './ui/reel';
 import { createVibeSelector } from './ui/vibeSelector';
-import { markResultSaved, markResultUnsaved, renderMessage, renderResult } from './ui/resultCard';
+import { markResultSaved, markResultUnsaved, renderExhausted, renderMessage, renderResult } from './ui/resultCard';
 import { scrollCardIntoView } from './ui/scroll';
 
 /** Read a motion duration token so the reel's timing is tuned in tokens.css, not here. */
@@ -158,12 +158,20 @@ async function spin(): Promise<void> {
     reel.feed(search.candidates);
 
     const recipes = await loadRecipes(mealDb, lookupCache, search.candidates);
-    const pick = pickRecipe(recipes, userIngredients, vibe, seen.asSet());
+    const result = pickRecipe(recipes, userIngredients, vibe, seen.asSet());
 
-    if (!pick) {
+    if (result.kind === 'empty') {
       showMessage("Found recipes but couldn't load any of them. Try again.", 'notice');
       return;
     }
+    if (result.kind === 'exhausted') {
+      reel.cancel();
+      renderExhausted(resultRegion, () => { seen.clear(); void spin(); });
+      resultRegion.classList.remove('hidden');
+      resultRegion.focus({ preventScroll: true });
+      return;
+    }
+    const pick = result.pick;
 
     const outcome = await reel.settle(pick.recipe);
     seen.addRecipe(pick.recipe);

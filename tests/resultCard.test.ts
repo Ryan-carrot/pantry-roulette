@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { markResultUnsaved, renderMessage, renderResult, type ResultHandlers } from '../src/ui/resultCard';
+import { markResultUnsaved, renderExhausted, renderMessage, renderResult, type ResultHandlers } from '../src/ui/resultCard';
 import type { Recipe, ScoredRecipe } from '../src/types';
 
 function recipe(overrides: Partial<Recipe> = {}): Recipe {
@@ -83,6 +83,17 @@ describe('result card', () => {
     expect(container.querySelector('#save-btn')?.getAttribute('aria-pressed')).toBe('true');
     markResultUnsaved(container, '1');
     expect(container.querySelector('#save-btn')?.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('renders the exhausted state with an inline clear-history action', () => {
+    const onClear = vi.fn();
+    renderExhausted(container, onClear);
+    const note = container.querySelector('.message.exhausted');
+    expect(note?.textContent).toContain("You've seen everything for these ingredients");
+    const button = container.querySelector<HTMLButtonElement>('.message.exhausted button');
+    expect(button?.textContent).toMatch(/clear history/i);
+    button?.click();
+    expect(onClear).toHaveBeenCalledTimes(1);
   });
 
   it('renders plain and notice messages', () => {

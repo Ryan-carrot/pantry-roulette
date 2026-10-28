@@ -4,8 +4,9 @@ import {
   pickRecipe,
   rankRecipes,
   scoreRecipe,
+  type PickResult,
 } from '../src/core/scoring';
-import type { Recipe, ScoredRecipe } from '../src/types';
+import type { Recipe } from '../src/types';
 
 function recipe(overrides: Partial<Recipe> = {}): Recipe {
   return {
@@ -60,15 +61,15 @@ describe('scoreRecipe', () => {
     expect(s.blendedScore).toBeCloseTo(0.5 * 0.5 + 0.5 * s.vibeScore, 10);
   });
 
-  it('keeps ingredientMatch untouched by the seen penalty but scales blendedScore by 0.3', () => {
+  it('flags a seen recipe but leaves its scores untouched; exclusion happens in ranking', () => {
     const fresh = scoreRecipe(recipe(), ['eggs', 'butter'], 'hearty', new Set());
     const seen = scoreRecipe(recipe(), ['eggs', 'butter'], 'hearty', new Set(['1']));
     expect(seen.seen).toBe(true);
     expect(seen.ingredientMatch).toBe(fresh.ingredientMatch);
-    expect(seen.blendedScore).toBeCloseTo(fresh.blendedScore * 0.3, 10);
+    expect(seen.blendedScore).toBe(fresh.blendedScore);
   });
 
-  it('applies the seen penalty by id, so a different meal with the same title is not penalised', () => {
+  it('flags seen by id, so a different meal with the same title is not seen', () => {
     const other = scoreRecipe(recipe({ id: '2' }), ['eggs', 'butter'], 'hearty', new Set(['1']));
     expect(other.seen).toBe(false);
   });
@@ -97,6 +98,13 @@ describe('rankRecipes', () => {
     // No ingredient overlap, and an unknown vibe gives vibeScore 0.
     const ranked = rankRecipes([recipe()], ['tofu'], 'nope', new Set());
     expect(ranked).toEqual([]);
+  });
+
+  it('excludes seen recipes from the ranking outright', () => {
+    const a = recipe({ id: '1', name: 'A', ingredients: ['eggs', 'butter'] });
+    const b = recipe({ id: '2', name: 'B', ingredients: ['eggs', 'x', 'y', 'z'] });
+    const ranked = rankRecipes([a, b], ['eggs', 'butter'], 'hearty', new Set(['1']));
+    expect(ranked.map((r) => r.recipe.name)).toEqual(['B']);
   });
 });
 
@@ -129,22 +137,47 @@ describe('rankRecipes tiebreak', () => {
 
 describe('pickRecipe', () => {
   it('returns the top-ranked candidate', () => {
-    const a = recipe({ name: 'A', ingredients: ['eggs', 'x', 'y', 'z'] });
-    const b = recipe({ name: 'B', ingredients: ['eggs', 'butter'] });
-    const pick = pickRecipe([a, b], ['eggs', 'butter'], 'hearty', new Set());
-    expect(pick?.recipe.name).toBe('B');
+    const a = recipe({ id: '1', name: 'A', ingredients: ['eggs', 'x', 'y', 'z'] });
+    const b = recipe({ id: '2', name: 'B', ingredients: ['eggs', 'butter'] });
+    const result = pickRecipe([a, b], ['eggs', 'butter'], 'hearty', new Set());
+    expect(result.kind).toBe('pick');
+    expect(result.kind === 'pick' && result.pick.recipe.name).toBe('B');
   });
 
-  it('falls back to a random candidate when nothing scores above zero', () => {
-    const a = recipe({ name: 'A' });
-    const b = recipe({ name: 'B' });
-    const pick = pickRecipe([a, b], ['tofu'], 'nope', new Set(), () => 0.99);
-    expect(pick?.recipe.name).toBe('B');
-    expect(pick?.matchedCount).toBe(0);
+  it('picks the unseen candidate even when a seen one scores higher', () => {
+    const a = recipe({ id: '1', name: 'A', ingredients: ['eggs', 'x', 'y', 'z'] });
+    const b = recipe({ id: '2', name: 'B', ingredients: ['eggs', 'butter'] });
+    const result = pickRecipe([a, b], ['eggs', 'butter'], 'hearty', new Set(['2']));
+    expect(result.kind === 'pick' && result.pick.recipe.name).toBe('A');
   });
 
-  it('returns null for an empty candidate pool', () => {
-    const pick: ScoredRecipe | null = pickRecipe([], ['eggs'], 'hearty', new Set());
-    expect(pick).toBeNull();
+  it('reports exhausted when every candidate has been seen', () => {
+    const a = recipe({ id: '1', name: 'A' });
+    const b = recipe({ id: '2', name: 'B' });
+    const result = pickRecipe([a, b], ['eggs'], 'hearty', new Set(['1', '2']));
+    expect(result).toEqual({ kind: 'exhausted' });
+  });
+
+  it('returns the top scorer again once history is cleared', () => {
+    const a = recipe({ id: '1', name: 'A', ingredients: ['eggs', 'x', 'y', 'z'] });
+    const b = recipe({ id: '2', name: 'B', ingredients: ['eggs', 'butter'] });
+    const seen = new Set(['1', '2']);
+    expect(pickRecipe([a, b], ['eggs', 'butter'], 'hearty', seen).kind).toBe('exhausted');
+    seen.clear();
+    const result = pickRecipe([a, b], ['eggs', 'butter'], 'hearty', seen);
+    expect(result.kind === 'pick' && result.pick.recipe.name).toBe('B');
+  });
+
+  it('falls back to a random unseen candidate when nothing scores above zero', () => {
+    const a = recipe({ id: '1', name: 'A' });
+    const b = recipe({ id: '2', name: 'B' });
+    const result = pickRecipe([a, b], ['tofu'], 'nope', new Set(), () => 0.99);
+    expect(result.kind === 'pick' && result.pick.recipe.name).toBe('B');
+    expect(result.kind === 'pick' && result.pick.matchedCount).toBe(0);
+  });
+
+  it('reports empty for an empty candidate pool', () => {
+    const result: PickResult = pickRecipe([], ['eggs'], 'hearty', new Set());
+    expect(result).toEqual({ kind: 'empty' });
   });
 });

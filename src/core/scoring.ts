@@ -4,7 +4,6 @@ import { scoreRecipeForVibe } from './vibes';
 
 const INGREDIENT_WEIGHT = 0.5;
 const VIBE_WEIGHT = 0.5;
-const SEEN_PENALTY = 0.3;
 
 /** Split "Eggs, butter ,,pasta," into ['eggs', 'butter', 'pasta']. */
 export function parseIngredients(input: string): string[] {
@@ -32,9 +31,10 @@ export function scoreRecipe(
   const vibeScore = scoreRecipeForVibe(recipe, vibe);
   const seen = isSeen(seenKeys, recipe);
 
-  let blendedScore = ingredientMatch * INGREDIENT_WEIGHT + vibeScore * VIBE_WEIGHT;
-  if (seen) blendedScore *= SEEN_PENALTY;
+  const blendedScore = ingredientMatch * INGREDIENT_WEIGHT + vibeScore * VIBE_WEIGHT;
 
+  /* `seen` is reported, not scored: rankRecipes excludes seen recipes outright.
+     v1 multiplied the blend by 0.3 instead, which let a seen recipe win a small pool. */
   return { recipe, matchedCount, ingredientMatch, vibeScore, blendedScore, seen };
 }
 
@@ -54,7 +54,7 @@ export function compareScored(a: ScoredRecipe, b: ScoredRecipe): number {
   return 0;
 }
 
-/** Score every candidate, drop zero scores, sort best first. Pure. */
+/** Score every candidate, drop seen ones and zero scores, sort best first. Pure. */
 export function rankRecipes(
   candidates: readonly Recipe[],
   userIngredients: readonly string[],
@@ -63,13 +63,24 @@ export function rankRecipes(
 ): ScoredRecipe[] {
   return candidates
     .map((recipe) => scoreRecipe(recipe, userIngredients, vibe, seenKeys))
-    .filter((scored) => scored.blendedScore > 0)
+    .filter((scored) => !scored.seen && scored.blendedScore > 0)
     .sort(compareScored);
 }
 
 /**
- * Choose tonight's recipe. Best ranked candidate wins; if nothing scores
- * above zero, a random candidate is used; an empty pool returns null.
+ * What a spin produced. 'exhausted' is its own state because the fix is
+ * different: nothing is wrong with the input or the network, the user has
+ * simply seen every candidate and can clear history.
+ */
+export type PickResult =
+  | { kind: 'pick'; pick: ScoredRecipe }
+  | { kind: 'exhausted' }
+  | { kind: 'empty' };
+
+/**
+ * Choose tonight's recipe. The best ranked unseen candidate wins; if no
+ * unseen candidate scores above zero, a random unseen one is used; if every
+ * candidate has been seen the result is 'exhausted'; an empty pool is 'empty'.
  */
 export function pickRecipe(
   candidates: readonly Recipe[],
@@ -77,14 +88,16 @@ export function pickRecipe(
   vibe: string,
   seenKeys: ReadonlySet<string>,
   random: () => number = Math.random,
-): ScoredRecipe | null {
+): PickResult {
+  if (candidates.length === 0) return { kind: 'empty' };
   const ranked = rankRecipes(candidates, userIngredients, vibe, seenKeys);
   const best = ranked[0];
-  if (best) return best;
+  if (best) return { kind: 'pick', pick: best };
 
-  if (candidates.length === 0) return null;
-  const index = Math.min(candidates.length - 1, Math.floor(random() * candidates.length));
-  const fallback = candidates[index];
-  if (!fallback) return null;
-  return scoreRecipe(fallback, userIngredients, vibe, seenKeys);
+  const unseen = candidates.filter((recipe) => !isSeen(seenKeys, recipe));
+  if (unseen.length === 0) return { kind: 'exhausted' };
+  const index = Math.min(unseen.length - 1, Math.floor(random() * unseen.length));
+  const fallback = unseen[index];
+  if (!fallback) return { kind: 'exhausted' };
+  return { kind: 'pick', pick: scoreRecipe(fallback, userIngredients, vibe, seenKeys) };
 }

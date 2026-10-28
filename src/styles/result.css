@@ -29,6 +29,9 @@
 .card-again .btn-ghost:hover { color: var(--text-1); border-color: var(--text-3); }
 .message { color: var(--text-2); text-align: center; padding: var(--space-4) 0; }
 .message.notice, .search-note.notice { color: var(--notice); }
+.message.exhausted { color: var(--text-2); }
+.btn-inline { color: var(--accent); font: inherit; text-decoration: underline; text-underline-offset: 3px; padding: 0 2px; border-radius: 4px; }
+.btn-inline:hover { color: var(--text-1); }
 .search-note { font-size: var(--size-14); text-align: center; margin-top: var(--space-4); }
 
 @media (max-width: 360px) { .card-title { font-size: 26px; } }
