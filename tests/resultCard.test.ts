@@ -27,6 +27,13 @@ describe('result card', () => {
     expect(container.querySelector('#view-recipe-btn')?.textContent).toBe('View recipe');
   });
 
+  it('shows a dash for ingredients when the spin had no input (surprise me)', () => {
+    renderResult(container, scored({ matchedCount: 0, ingredientMatch: 0 }), handlers({ noInput: true }));
+    const pills = [...container.querySelectorAll('.pill')].map((p) => p.textContent);
+    expect(pills[0]).toBe('— ingredients');
+    expect(pills).toHaveLength(3);
+  });
+
   it('renders names as text, never markup', () => {
     renderResult(container, scored({ recipe: recipe({ name: '<b>x</b> "y"' }) }), handlers());
     expect(container.querySelector('h2 b')).toBeNull();

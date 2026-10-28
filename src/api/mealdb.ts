@@ -20,6 +20,8 @@ export interface MealDbClient {
   searchByIngredient(ingredient: string): Promise<MealDbStub[]>;
   /** Full meal by id, or null when MealDB has no such meal. Throws on failure. */
   lookup(id: string): Promise<MealDbMeal | null>;
+  /** One random full meal. Throws on failure. */
+  random(): Promise<MealDbMeal | null>;
 }
 
 interface MealsEnvelope<T> {
@@ -72,6 +74,10 @@ export function createMealDbClient(
     async lookup(id) {
       const url = `${BASE_URL}/lookup.php?i=${encodeURIComponent(id)}`;
       const meals = await getMeals(fetchImpl, url, (v): v is MealDbMeal => hasIdAndName(v));
+      return meals[0] ?? null;
+    },
+    async random() {
+      const meals = await getMeals(fetchImpl, `${BASE_URL}/random.php`, (v): v is MealDbMeal => hasIdAndName(v));
       return meals[0] ?? null;
     },
   };

@@ -2,14 +2,15 @@ import './styles/index.css';
 
 import { loadRecipes } from './api/loadRecipes';
 import { createMealDbClient, findCandidates } from './api/mealdb';
+import { surpriseMe } from './api/surprise';
 import { recipeKey } from './core/identity';
-import { parseIngredients, pickRecipe } from './core/scoring';
+import { parseIngredients, pickRecipe, scoreRecipe } from './core/scoring';
 import { createFavouritesStore } from './storage/favourites';
 import { createLookupCache } from './storage/lookupCache';
 import { createRecentlyViewedStore } from './storage/recentlyViewed';
 import { createSeenStore } from './storage/seen';
 import type { StorageLike } from './storage/storage';
-import type { Recipe } from './types';
+import type { Recipe, ScoredRecipe } from './types';
 import { wireClearHistory } from './ui/clearHistory';
 import { renderFavourites } from './ui/favourites';
 import { createModal } from './ui/modal';
@@ -62,6 +63,7 @@ const lookupCache = createLookupCache(sessionCache);
 const ingredientsInput = byId<HTMLInputElement>('ingredients');
 const vibeSelector = createVibeSelector(byId<HTMLFieldSetElement>('vibe'), { initial: 'comfort' });
 const spinButton = byId<HTMLButtonElement>('spin-btn');
+const surpriseButton = byId<HTMLButtonElement>('surprise-btn');
 const spinText = byId<HTMLSpanElement>('btn-text');
 const clearHistoryButton = byId<HTMLButtonElement>('clear-history-btn');
 const clearHistoryText = byId<HTMLSpanElement>('clear-history-text');
@@ -121,11 +123,65 @@ function showMessage(message: string, kind: 'plain' | 'notice' = 'plain'): void 
 
 function setSpinning(spinning: boolean): void {
   spinButton.disabled = spinning;
+  surpriseButton.disabled = spinning;
   spinButton.classList.toggle('spinning', spinning);
   spinText.textContent = spinning ? SPIN_BUSY_LABEL : SPIN_IDLE_LABEL;
 }
 
 let spinInFlight = false;
+
+/** Land the reel on the pick, then render the card and bring it into view. Shared by spin and surprise. */
+async function showPick(pick: ScoredRecipe, vibe: string, extra: { failedIngredients?: readonly string[]; noInput?: boolean }): Promise<void> {
+  const outcome = await reel.settle(pick.recipe);
+  seen.addRecipe(pick.recipe);
+  recentlyViewed.add(pick.recipe);
+
+  renderResult(resultRegion, pick, {
+    isSaved: favourites.has(pick.recipe),
+    vibeLabel: vibe,
+    onSave() {
+      const result = favourites.add(pick.recipe);
+      if (result === 'added') refreshFavourites();
+      return result;
+    },
+    onView: (trigger) => openRecipe(pick.recipe, trigger),
+    onSpinAgain: () => void (extra.noInput ? surprise() : spin()),
+    failedIngredients: extra.failedIngredients ?? [],
+    noInput: extra.noInput ?? false,
+  });
+  resultRegion.classList.toggle('pulse', outcome === 'pulsed');
+  resultRegion.classList.remove('hidden');
+  resultRegion.focus({ preventScroll: true });
+  const card = resultRegion.querySelector<HTMLElement>('.card');
+  if (card) scrollCardIntoView(card, { viewportHeight: window.innerHeight, reduceMotion });
+  refreshRecentlyViewed();
+}
+
+/** "Surprise me": no input, one random recipe through the same reel and card. */
+async function surprise(): Promise<void> {
+  if (spinInFlight) return;
+  const vibe = vibeSelector.value();
+  spinInFlight = true;
+  setSpinning(true);
+  resultRegion.classList.add('hidden');
+  resultRegion.classList.remove('pulse', 'away');
+  reelRegion.classList.remove('hidden');
+  reel.start();
+  try {
+    const recipe = await surpriseMe(mealDb, lookupCache, seen.asSet());
+    if (!recipe) {
+      showMessage("Couldn't reach the recipe service. Check your connection and try again.", 'notice');
+      return;
+    }
+    reel.feed([{ idMeal: recipe.id ?? '', strMeal: recipe.name, strMealThumb: recipe.image }]);
+    await showPick(scoreRecipe(recipe, [], vibe, seen.asSet()), vibe, { noInput: true });
+  } catch {
+    showMessage('Something went wrong. Try again.', 'notice');
+  } finally {
+    spinInFlight = false;
+    setSpinning(false);
+  }
+}
 
 async function spin(): Promise<void> {
   if (spinInFlight) return;
@@ -171,30 +227,7 @@ async function spin(): Promise<void> {
       resultRegion.focus({ preventScroll: true });
       return;
     }
-    const pick = result.pick;
-
-    const outcome = await reel.settle(pick.recipe);
-    seen.addRecipe(pick.recipe);
-    recentlyViewed.add(pick.recipe);
-
-    renderResult(resultRegion, pick, {
-      isSaved: favourites.has(pick.recipe),
-      vibeLabel: vibe,
-      onSave() {
-        const result = favourites.add(pick.recipe);
-        if (result === 'added') refreshFavourites();
-        return result;
-      },
-      onView: (trigger) => openRecipe(pick.recipe, trigger),
-      onSpinAgain: () => void spin(),
-      failedIngredients: search.failedIngredients,
-    });
-    resultRegion.classList.toggle('pulse', outcome === 'pulsed');
-    resultRegion.classList.remove('hidden');
-    resultRegion.focus({ preventScroll: true });
-    const card = resultRegion.querySelector<HTMLElement>('.card');
-    if (card) scrollCardIntoView(card, { viewportHeight: window.innerHeight, reduceMotion });
-    refreshRecentlyViewed();
+    await showPick(result.pick, vibe, { failedIngredients: search.failedIngredients });
   } catch {
     showMessage('Something went wrong. Try again.', 'notice');
   } finally {
@@ -204,6 +237,7 @@ async function spin(): Promise<void> {
 }
 
 spinButton.addEventListener('click', () => void spin());
+surpriseButton.addEventListener('click', () => void surprise());
 ingredientsInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') void spin();
 });

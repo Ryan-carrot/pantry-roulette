@@ -12,6 +12,8 @@ export interface ResultHandlers {
   onSpinAgain: () => void;
   /** Ingredients whose filter request failed; shown as a notice under the card. */
   failedIngredients?: readonly string[];
+  /** The spin had no ingredient input (surprise me), so the match pill shows a dash. */
+  noInput?: boolean;
 }
 
 /** The lit-when-saved treatment: aria-pressed drives the glow in result.css. */
@@ -60,7 +62,7 @@ export function renderResult(container: HTMLElement, scored: ScoredRecipe, handl
         el('h2', { class: 'card-title' }, [recipe.name]),
         el('p', { class: 'desc' }, [recipe.description]),
         el('div', { class: 'pills', 'aria-label': 'How this matched' }, [
-          el('span', { class: 'pill' }, [el('b', {}, [`${scored.matchedCount} of ${recipe.ingredients.length}`]), ' ingredients']),
+          el('span', { class: 'pill' }, [el('b', {}, [handlers.noInput ? '—' : `${scored.matchedCount} of ${recipe.ingredients.length}`]), ' ingredients']),
           el('span', { class: 'pill' }, [el('b', {}, [`${scorePercent}%`]), ' score']),
           el('span', { class: 'pill' }, [el('b', {}, [`${vibePercent}%`]), ` ${handlers.vibeLabel}`]),
         ]),

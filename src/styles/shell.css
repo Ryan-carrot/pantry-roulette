@@ -48,6 +48,12 @@ input[type=text]:focus-visible { outline-offset: 2px; }
 .btn-spin:focus-visible { outline-color: var(--text-1); }
 .btn-spin:disabled { background: var(--raised); color: var(--text-3); }
 
+/* surprise me: a secondary text link under Spin, never a second primary */
+.surprise { text-align: center; margin-top: var(--space-3); }
+.btn-link { color: var(--text-2); font-size: var(--size-15); text-decoration: underline; text-underline-offset: 3px; padding: var(--space-1) var(--space-2); border-radius: 4px; }
+.btn-link:hover { color: var(--text-1); }
+.btn-link:disabled { color: var(--text-3); text-decoration: none; }
+
 /* clear seen history */
 .history { padding-top: var(--space-3); }
 .btn-text { display: inline-flex; align-items: center; gap: var(--space-3); color: var(--text-2); font-size: var(--size-15); font-weight: 500; padding: var(--space-2) 0; }
