@@ -96,9 +96,10 @@ describe('result card', () => {
     const onClear = vi.fn();
     renderExhausted(container, onClear);
     const note = container.querySelector('.message.exhausted');
-    expect(note?.textContent).toContain("You've seen everything for these ingredients");
+    expect(note?.textContent).toBe("You've seen everything for these ingredients. Clear history to start over.");
+    expect(note?.textContent).not.toContain('—');
     const button = container.querySelector<HTMLButtonElement>('.message.exhausted button');
-    expect(button?.textContent).toMatch(/clear history/i);
+    expect(button?.textContent).toBe('Clear history');
     button?.click();
     expect(onClear).toHaveBeenCalledTimes(1);
   });

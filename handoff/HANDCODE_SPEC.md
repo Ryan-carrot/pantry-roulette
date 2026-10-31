@@ -317,18 +317,18 @@ Behaviour only; the look is §8. Everything here is design-independent and was f
 ### Scroll the whole card into view after a spin
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** After the card renders: `resultRegion.focus({ preventScroll: true })`, then `card.scrollIntoView({ block: 'nearest' })`, then if `card.getBoundingClientRect().bottom` is still past `innerHeight - 16`, `window.scrollBy({ top: overflow })`. Smooth unless reduced motion. Never for a notice.
+**What it fixes / does:** After the card renders: `resultRegion.focus({ preventScroll: true })`, then one `window.scrollBy` computed from the result region's rect so the card's bottom edge lands `--card-scroll-margin` (16px) above the viewport bottom; if the card is above the viewport, its top comes down to 0 instead, never so far that the bottom goes out. Smooth unless reduced motion. Never for a notice.
 **Original bug:** new behaviour (manual round 3)
 **Issue:** create ("Scroll the whole card into view after a spin")
 **Reference:** `src/ui/scroll.ts` (`scrollCardIntoView`), the end of `showPick` in `src/main.ts`
-**Why it works this way:** On a phone the reel lands with the card's action row below the fold. Focus first so the ring is on the card; scroll second so the ring is on screen. `nearest` moves the least; the nudge covers a card taller than the viewport, where the buttons matter more than the top of the photo.
-**Hand-code notes:** Inject `scrollBy` so the test can stub it. Fifteen lines.
-**Test to write:** With a stubbed rect and viewport, a clipped card calls `scrollBy` with the overflow plus the margin; a card that fits does not; reduced motion passes `behavior: 'auto'`.
+**Why it works this way:** On a phone the reel lands with the card's action row below the fold. Focus first so the ring is on the card; scroll second so the ring is on screen. One computed scroll, not `scrollIntoView` followed by a nudge: the first version did that, and on a phone the two smooth scrolls interrupted each other and the nudge measured the card before it had moved, which left "Spin again" flush against the bottom edge (manual round 4). Measure the result region, not the card: the card's arrival animation transforms it by tens of pixels in its first frames, and transforms change `getBoundingClientRect` but not layout. For a card taller than the viewport the bottom wins; the buttons matter more than the top of the photo.
+**Hand-code notes:** `delta = rect.bottom - (innerHeight - margin)` when positive; else if `rect.top < 0`, `delta = Math.max(rect.top, rect.bottom - (innerHeight - margin))`; one `scrollBy({ top: delta })`. Read the margin with `parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-scroll-margin'))` so it is tuned in CSS. Inject `scrollBy` so the test can stub it. About twenty lines.
+**Test to write:** With a stubbed rect and a `scrollBy` that moves it: a card flush with the bottom ends 16px above it; a card below the fold ends with its bottom 16px above the viewport bottom in a single call; a card that fits with room is not scrolled; reduced motion passes `behavior: 'auto'`; setting `--card-scroll-margin` changes the result.
 
 ### Three result states that are not a pick
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it fixes / does:** "Enter at least one ingredient." for blank input; "Nothing found. Try different ingredients." for an empty candidate list with no failures; "Couldn't reach the recipe service. Check your connection and try again." in coral when every ingredient request failed; "Found recipes but couldn't load any of them." in coral when candidates existed but every lookup failed; and the exhausted message with its inline clear action when every candidate has been seen. A partial failure (some ingredients down, result found) adds a coral "Couldn't search for: ..." under the card.
+**What it fixes / does:** "Enter at least one ingredient." for blank input; "Nothing found. Try different ingredients." for an empty candidate list with no failures; "Couldn't reach the recipe service. Check your connection and try again." in coral when every ingredient request failed; "Found recipes but couldn't load any of them." in coral when candidates existed but every lookup failed; and, when every candidate has been seen, "You've seen everything for these ingredients. Clear history to start over." with "Clear history" as an inline button. A partial failure (some ingredients down, result found) adds a coral "Couldn't search for: ..." under the card.
 **Original bug:** BUGS_RESOLVED #14, #15; exhausted is §3
 **Issue:** create (both network issues), ("Exclude seen recipes")
 **Reference:** `src/main.ts` (`spin`), `src/ui/resultCard.ts` (`renderMessage`, `renderExhausted`)
@@ -579,7 +579,7 @@ The chosen direction is C's skeleton with B's sheet structure, rendered in C's t
 ### Surprise me link and the exhausted notice
 
 **Decision:** [ ] Keep  [ ] Consider  [ ] Skip
-**What it does:** Under Spin, a centred text link "Surprise me" in text-2 at 15, underlined, text-1 on hover, text-3 without the underline while a spin is in flight. The exhausted state is a plain `p.message.exhausted` in text-2 with an inline gold `button.btn-inline` ("clear history"), underlined; not coral, because nothing is wrong.
+**What it does:** Under Spin, a centred text link "Surprise me" in text-2 at 15, underlined, text-1 on hover, text-3 without the underline while a spin is in flight. The exhausted state is a plain `p.message.exhausted` in text-2 with an inline gold `button.btn-inline` ("Clear history", which starts the second sentence), underlined; not coral, because nothing is wrong. The copy is two sentences with a full stop, no dash.
 **Original bug:** none; §5 "Surprise me" and "Three result states"
 **Issue:** create ("Surprise me"), ("Exclude seen recipes")
 **Reference:** `src/styles/shell.css` (`.surprise`, `.btn-link`), `src/styles/result.css` (`.message.exhausted`, `.btn-inline`)

@@ -1,50 +1,70 @@
 // @vitest-environment happy-dom
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { scrollCardIntoView } from '../src/ui/scroll';
 
-/** A card whose rect we control; scrollIntoView and scrollBy are stubs that move the rect. */
-function fakeCard(top: number, bottom: number) {
-  const card = document.createElement('article');
-  let rect = { top, bottom, left: 0, right: 390, width: 390, height: bottom - top, x: 0, y: top, toJSON() {} };
-  card.getBoundingClientRect = () => rect as DOMRect;
-  const scrollIntoView = vi.fn((opts: ScrollIntoViewOptions) => {
-    /* block: nearest on a card that overflows the bottom aligns its top with the viewport top */
-    if (opts.block === 'nearest' && rect.bottom > 844) rect = { ...rect, top: 0, bottom: rect.height, y: 0 };
-  });
-  card.scrollIntoView = scrollIntoView as unknown as typeof card.scrollIntoView;
-  const scrollBy = vi.fn((opts: ScrollToOptions) => { const dy = opts.top ?? 0; rect = { ...rect, top: rect.top - dy, bottom: rect.bottom - dy, y: rect.y - dy }; });
-  return { card, scrollIntoView, scrollBy, rect: () => rect };
+const VIEWPORT = 844;
+
+/** An element whose rect we control; the scrollBy stub moves the rect the way the page would. */
+function fakeTarget(top: number, bottom: number) {
+  const el = document.createElement('div');
+  let rect = { top, bottom };
+  el.getBoundingClientRect = () => ({ ...rect, left: 0, right: 390, width: 390, height: rect.bottom - rect.top, x: 0, y: rect.top, toJSON() {} }) as DOMRect;
+  const scrollBy = vi.fn((opts: ScrollToOptions) => { const dy = opts.top ?? 0; rect = { top: rect.top - dy, bottom: rect.bottom - dy }; });
+  return { el, scrollBy, rect: () => rect };
 }
 
 describe('scrollCardIntoView', () => {
-  it('leaves a card that already fits where it is', () => {
-    const { card, scrollIntoView, scrollBy } = fakeCard(100, 700);
-    scrollCardIntoView(card, { viewportHeight: 844, reduceMotion: false, scrollBy });
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', behavior: 'smooth' });
+  afterEach(() => { document.documentElement.style.removeProperty('--card-scroll-margin'); });
+
+  it('leaves a card alone when it already fits with room under it', () => {
+    const { el, scrollBy } = fakeTarget(100, 700);
+    scrollCardIntoView(el, { viewportHeight: VIEWPORT, reduceMotion: false, margin: 16, scrollBy });
     expect(scrollBy).not.toHaveBeenCalled();
   });
 
-  it('brings a tall card fully into a 390px viewport, action row included', () => {
-    // 640px tall card starting below the fold: nearest aligns its top, which still fits (640 < 844)
-    const { card, scrollBy, rect } = fakeCard(900, 1540);
-    scrollCardIntoView(card, { viewportHeight: 844, reduceMotion: false, scrollBy });
-    expect(rect().top).toBeGreaterThanOrEqual(0);
-    expect(rect().bottom).toBeLessThanOrEqual(844);
+  it('lifts a card sitting flush with the bottom edge so it has 16px of room', () => {
+    const { el, scrollBy, rect } = fakeTarget(200, 840);
+    scrollCardIntoView(el, { viewportHeight: VIEWPORT, reduceMotion: false, margin: 16, scrollBy });
+    expect(scrollBy).toHaveBeenCalledTimes(1);
+    expect(rect().bottom).toBe(VIEWPORT - 16);
   });
 
-  it('nudges the page when nearest leaves the bottom edge clipped', () => {
-    // a card taller than the viewport: nearest aligns the top, the bottom is still clipped, so we scroll
-    // the clipped amount plus the margin and accept the top going off screen
-    const { card, scrollBy, rect } = fakeCard(0, 1000);
-    scrollCardIntoView(card, { viewportHeight: 844, reduceMotion: false, scrollBy, margin: 16 });
-    expect(scrollBy).toHaveBeenCalledWith({ top: 1000 - 844 + 16, behavior: 'smooth' });
-    expect(rect().bottom).toBeLessThanOrEqual(844 - 16);
+  it('brings a card below the fold up until its bottom edge is 16px above the viewport bottom', () => {
+    const { el, scrollBy, rect } = fakeTarget(900, 1540);
+    scrollCardIntoView(el, { viewportHeight: VIEWPORT, reduceMotion: false, margin: 16, scrollBy });
+    expect(scrollBy).toHaveBeenCalledWith({ top: 1540 - (VIEWPORT - 16), behavior: 'smooth' });
+    expect(rect().bottom).toBe(VIEWPORT - 16);
+    expect(rect().top).toBeGreaterThanOrEqual(0);
+  });
+
+  it('brings a card above the viewport down to the top', () => {
+    const { el, scrollBy, rect } = fakeTarget(-200, 400);
+    scrollCardIntoView(el, { viewportHeight: VIEWPORT, reduceMotion: false, margin: 16, scrollBy });
+    expect(rect().top).toBe(0);
+  });
+
+  it('favours the action row when the card is taller than the viewport', () => {
+    const { el, scrollBy, rect } = fakeTarget(0, 1000);
+    scrollCardIntoView(el, { viewportHeight: VIEWPORT, reduceMotion: false, margin: 16, scrollBy });
+    expect(rect().bottom).toBe(VIEWPORT - 16);
+  });
+
+  it('scrolls once, not twice, so two smooth scrolls cannot interrupt each other', () => {
+    const { el, scrollBy } = fakeTarget(900, 1540);
+    scrollCardIntoView(el, { viewportHeight: VIEWPORT, reduceMotion: false, margin: 16, scrollBy });
+    expect(scrollBy).toHaveBeenCalledTimes(1);
   });
 
   it('uses instant scrolling under reduced motion', () => {
-    const { card, scrollIntoView, scrollBy } = fakeCard(0, 1000);
-    scrollCardIntoView(card, { viewportHeight: 844, reduceMotion: true, scrollBy });
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', behavior: 'auto' });
+    const { el, scrollBy } = fakeTarget(900, 1540);
+    scrollCardIntoView(el, { viewportHeight: VIEWPORT, reduceMotion: true, margin: 16, scrollBy });
     expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }));
+  });
+
+  it('reads the margin from --card-scroll-margin when none is passed', () => {
+    document.documentElement.style.setProperty('--card-scroll-margin', '24px');
+    const { el, scrollBy, rect } = fakeTarget(900, 1540);
+    scrollCardIntoView(el, { viewportHeight: VIEWPORT, reduceMotion: false, scrollBy });
+    expect(rect().bottom).toBe(VIEWPORT - 24);
   });
 });

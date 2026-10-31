@@ -6,8 +6,8 @@
 
 The last build pass. From here the project is a reference implementation and the production app is hand-coded from `handoff/`.
 
-- After a spin the whole card, buttons included, is scrolled into view (Round 3 note). Smooth unless reduced motion.
-- Seen recipes are excluded from the pool instead of penalised. When every candidate has been seen the result is its own state, "You've seen everything for these ingredients — clear history to start over", with the clear action inline.
+- After a spin the whole card, buttons included, is scrolled into view with 16px (`--card-scroll-margin`) under it (Round 3 and 4 notes). One computed scroll, smooth unless reduced motion.
+- Seen recipes are excluded from the pool instead of penalised. When every candidate has been seen the result is its own state, "You've seen everything for these ingredients. Clear history to start over.", with the clear action inline.
 - "Surprise me": a text link under Spin that rolls `random.php`, re-rolls past seen recipes up to three times, caches the roll, and renders through the same reel and card with "— ingredients".
 - Servings spike: a measure parser in `core/` and a go verdict in `design/SERVINGS_SPIKE.md` (90.8% of strings yield a quantity). No servings control.
 - Handoff finalised: spec §5, §6, §8 rewritten for the final UI, §9 build order added, issues for the post-bug changes, Round 4 in the manual tests.

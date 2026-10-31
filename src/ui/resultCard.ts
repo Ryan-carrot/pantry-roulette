@@ -87,11 +87,11 @@ export function renderMessage(container: HTMLElement, message: string, kind: 'pl
  * fix is to clear history, so the action sits inline in the message.
  */
 export function renderExhausted(container: HTMLElement, onClear: () => void): void {
-  const button = el('button', { type: 'button', class: 'btn-inline' }, ['clear history']);
+  const button = el('button', { type: 'button', class: 'btn-inline' }, ['Clear history']);
   button.addEventListener('click', onClear);
   replaceChildren(container, [
     el('p', { class: 'message exhausted' }, [
-      "You've seen everything for these ingredients — ",
+      "You've seen everything for these ingredients. ",
       button,
       ' to start over.',
     ]),

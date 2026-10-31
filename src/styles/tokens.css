@@ -53,6 +53,7 @@
   --space-7: 24px;
   --space-8: 32px;
   --column: 560px;
+  --card-scroll-margin: 16px; /* room left under the card after the post-spin scroll (src/ui/scroll.ts) */
 
   /* Radius */
   --radius-sheet: 20px;

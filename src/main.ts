@@ -153,7 +153,8 @@ async function showPick(pick: ScoredRecipe, vibe: string, extra: { failedIngredi
   resultRegion.classList.remove('hidden');
   resultRegion.focus({ preventScroll: true });
   const card = resultRegion.querySelector<HTMLElement>('.card');
-  if (card) scrollCardIntoView(card, { viewportHeight: window.innerHeight, reduceMotion });
+  /* measure the region, not the card: the card's arrival animation transforms it */
+  if (card) scrollCardIntoView(resultRegion, { viewportHeight: window.innerHeight, reduceMotion });
   refreshRecentlyViewed();
 }
 

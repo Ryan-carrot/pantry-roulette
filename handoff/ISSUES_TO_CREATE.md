@@ -303,7 +303,7 @@ Child issues: the four below, plus #34 (custom properties) and #36 (reduced moti
 
 **Labels:** `feature`, `vibe-engine`
 
-The seen list multiplies a seen recipe's score by 0.3. With a small candidate pool a seen recipe still wins, so "clear history" looks like it does nothing (manual testing, round 2). Replace the multiplier with exclusion: seen recipes are removed from the ranked pool. When every candidate has been seen, show a distinct state, not "nothing found" and not a connection error: "You've seen everything for these ingredients — clear history to start over", with the clear-history action inline. The random fallback draws from unseen candidates only. Keep the seen cap at 20 and keep the `seen` flag on the scored object. Reference: sandbox `src/core/scoring.ts` (`rankRecipes`, `pickRecipe` returning `{ kind: 'pick' | 'exhausted' | 'empty' }`), `src/ui/resultCard.ts` (`renderExhausted`).
+The seen list multiplies a seen recipe's score by 0.3. With a small candidate pool a seen recipe still wins, so "clear history" looks like it does nothing (manual testing, round 2). Replace the multiplier with exclusion: seen recipes are removed from the ranked pool. When every candidate has been seen, show a distinct state, not "nothing found" and not a connection error: "You've seen everything for these ingredients. Clear history to start over.", with the clear-history action inline. The random fallback draws from unseen candidates only. Keep the seen cap at 20 and keep the `seen` flag on the scored object. Reference: sandbox `src/core/scoring.ts` (`rankRecipes`, `pickRecipe` returning `{ kind: 'pick' | 'exhausted' | 'empty' }`), `src/ui/resultCard.ts` (`renderExhausted`).
 
 **Acceptance Criteria:**
 - [ ] A pool where every candidate is seen yields the exhausted message with a working inline clear action
@@ -327,10 +327,10 @@ A text link under Spin that calls `random.php`, normalises the result through th
 
 **Labels:** `bug`, `ui`
 
-After the reel lands, the card's action row can sit below the fold on a phone (manual testing, round 3). After rendering: focus the result region with `preventScroll`, then `card.scrollIntoView({ block: 'nearest' })`, then if the card's bottom edge is still clipped scroll the page by the overflow plus a 16px margin. Smooth unless `prefers-reduced-motion`, then auto. Do not scroll for a notice. Reference: sandbox `src/ui/scroll.ts` (`scrollCardIntoView`).
+After the reel lands, the card's action row can sit below the fold on a phone (manual testing, round 3). After rendering: focus the result region with `preventScroll`, then one `window.scrollBy` computed from the result region's rect so the card's bottom edge lands 16px (a `--card-scroll-margin` token) above the viewport bottom. One scroll, not `scrollIntoView` plus a nudge (two smooth scrolls interrupt each other), and measure the region, not the card (its arrival animation transforms it). Smooth unless `prefers-reduced-motion`, then auto. Do not scroll for a notice. Reference: sandbox `src/ui/scroll.ts` (`scrollCardIntoView`).
 
 **Acceptance Criteria:**
-- [ ] After a spin on a 390px viewport the card including its buttons is fully visible
+- [ ] After a spin on a 390px viewport the card including its buttons is fully visible, with about 16px of room under it
 - [ ] The focus ring on the result is visible after the scroll
 - [ ] Reduced motion scrolls instantly
 - [ ] Unit test with a stubbed viewport and `scrollBy`
