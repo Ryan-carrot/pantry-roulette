@@ -5,7 +5,6 @@
   "description": "Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight.",
   "homepage": "https://pantryroulette.com",
   "author": "Ryan",
-  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",

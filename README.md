@@ -1,100 +1,75 @@
-# Pantry Roulette (sandbox rebuild)
+# Pantry Roulette
 
-## What this is
+Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight.
 
-A local, experimental rebuild of [Pantry Roulette](https://github.com/Ryan-carrot/pantry-roulette). The git remote has been removed and nothing here is deployed or published. Its purpose is to work out the logic, behaviour and eventually a redesigned UI so that Ryan can hand-code the production app himself, in the public repo. The code and docs in this directory are written for a person to read and rebuild from, not for end users.
+**[pantryroulette.com](https://pantryroulette.com)**
 
-The deliverable is the handoff pack in [`handoff/`](handoff/). Start there if you are here to build.
+## What it does
 
-What the app does: you type a comma-separated list of ingredients, pick one of ten vibes (Lazy, Impressive, Hearty, Fun, Healthy, Comfort, Fancy, Elegant, Classic, Simple) and spin. It asks [TheMealDB](https://www.themealdb.com) for meals containing each ingredient, merges and dedups the hits, fetches details for up to 30, scores each one 50/50 on ingredient overlap and vibe fit, leaves out recipes you have already been shown (and says so when you have seen them all), and renders the best pick. "Surprise me" skips the input and rolls a random recipe instead. Favourites, a seen list and a recently-viewed strip live in localStorage. No backend, no account.
+Type the ingredients you have, separated by commas, set the vibe dial (Lazy, Simple, Comfort, Hearty, Healthy, Fun, Classic, Fancy, Elegant, Impressive) and hit Spin. The reel runs through real recipes from [TheMealDB](https://www.themealdb.com) that use your ingredients and lands on the one that best fits both your pantry and your mood. Open it and you get everything you need to cook from your phone: ingredients you can tick off as they go in the pan, numbered steps in large type, a rough cook-time estimate, and Save, Print and Close within reach of your thumb. It won't show you the same recipe twice until you clear your history, and "Surprise me" skips the typing altogether. Saved recipes and your recent picks stay on your device; there is no account.
 
-## Run and test
+## How this was built
 
-```sh
-npm install
-npm run dev        # http://localhost:5173
-npm test           # vitest run (204 tests)
-npm run typecheck  # tsc --noEmit
-npm run build      # tsc --noEmit && vite build → dist/ (local check only)
-npm run preview    # serve dist/ on http://localhost:4173
-```
+Ryan wrote the design brief and the spec, built the v1 app by hand, and ran a code review of it. He then directed AI agents (Claude Code) through a phased rebuild in TypeScript, with tests written at every phase and four rounds of manual QA on a real phone between passes. The process is all in the repo: the brief, the three design directions he chose between and the resulting design system in [`design/`](design/), the decision log and manual test rounds in [`docs/`](docs/), every v1 bug and the commit that fixed it in [`BUGS_RESOLVED.md`](BUGS_RESOLVED.md), and the commit history itself. The core logic modules are being rewritten by hand as ongoing ownership work, with the test suite as the contract.
 
 ## Stack
 
-- [Vite](https://vite.dev) vanilla TypeScript template, TypeScript in strict mode (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`)
-- [Vitest](https://vitest.dev) for unit tests, happy-dom for the DOM tests
-- No UI framework, no component library, no CSS framework
+- [Vite](https://vite.dev) with vanilla TypeScript in strict mode (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`)
+- [Vitest](https://vitest.dev) for unit tests, with happy-dom for the DOM tests
+- No UI framework, component library or CSS framework
 - Google Fonts: Bricolage Grotesque (display) and Archivo (body)
-
-The production app is vanilla JavaScript with no build step. The handoff spec says, item by item, what changes when you carry each piece across without TypeScript or a bundler.
+- Static build, hosted on GitHub Pages
 
 ## Architecture
 
 ```
 src/
-  main.ts                 bootstrap: wires storage, API, UI and the spin flow
+  main.ts                 wires storage, API and UI together; the spin and surprise flows
   types.ts                Recipe, ScoredRecipe, VibeKey, VibeProfile, MealDB shapes
-  api/mealdb.ts           fetch client (injected fetch, 15s timeout), interleave, dedup, cap
-  api/loadRecipes.ts      stubs → recipes via the session cache, one lookup per unseen id
-  api/surprise.ts         one random recipe, re-rolled up to three times past seen ones, cached
-  core/cookTime.ts        duration phrases → under-30 / 30-60 / over-60 bucket, or null (pure)
-  core/identity.ts        recipeKey / sameRecipe / isSeen: id with name fallback for v1 entries
-  core/normalize.ts       MealDB meal → Recipe (pure)
-  core/vibes.ts           vibeProfiles (from v1, one weight retuned) + scoreRecipeForVibe (pure)
-  core/scoring.ts         parseIngredients, overlap, blend, seen exclusion, tiebreak, pick → pick / exhausted / empty (pure)
-  core/measurements.ts    measure string → quantity and unit; the servings spike, not wired (pure)
-  storage/                typed localStorage wrappers; every read is guarded and validated
-  ui/el.ts                typed createElement helper and inline SVG icons
-  ui/vibeSelector.ts      the vibe dial: ten radios on a snap-scroll rail, with a "see all" grid
-  ui/reel.ts              the spin reel: skeleton rows, fed by candidates, lands on the pick or pulses
-  ui/resultCard.ts        the pay-out card: pills, View recipe, the Save lamp, Spin again, notices, the exhausted state
-  ui/scroll.ts            bring the whole card into view after a spin
-  ui/clearHistory.ts      "Clear seen history" button with its two-second confirmation
-  ui/favourites.ts        favourite cards
-  ui/recentlyViewed.ts    recently viewed buttons
-  ui/modal.ts             recipe sheet: checkable ingredients, numbered steps, pinned Save / Print / Close, focus trap and return
-  ui/print.ts             standalone print document built with DOM APIs
-  styles/tokens.css       every colour, size, radius and motion value (see design/SYSTEM.md)
-  styles/*.css            one file per component; no raw hex outside tokens.css and print.css
-tests/                    one file per module; mealdb tests mock fetch, storage tests use a memory store
-handoff/                  the hand-code pack: spec, decisions, issues to create, reference map
+  api/mealdb.ts           fetch client (15s timeout), interleave, dedup, cap
+  api/loadRecipes.ts      candidates → recipes via the session cache
+  api/surprise.ts         one random recipe, re-rolled past ones you've seen
+  core/normalize.ts       MealDB meal → Recipe
+  core/vibes.ts           the ten vibe profiles and the vibe score
+  core/scoring.ts         ingredient overlap, blend, seen exclusion, tiebreak, pick
+  core/identity.ts        recipe identity by id, with a name fallback for old saves
+  core/cookTime.ts        instruction text → under 30 / 30–60 / over 60 min estimate
+  core/measurements.ts    measure string → quantity and unit (groundwork for servings)
+  storage/                localStorage and sessionStorage wrappers; every read guarded and validated
+  ui/                     dial, reel, result card, recipe sheet, saved, recent, print
+  styles/tokens.css       every colour, size, radius and motion value
+  styles/*.css            one file per component
+tests/                    one file per module
 ```
 
-Everything under `core/` and the merge/dedup logic in `api/` is pure: no DOM, no `localStorage`, no network. That is what makes it testable, and it is the part most worth carrying across unchanged. Nothing in `src/` uses `innerHTML`.
+Everything under `core/` and the merge logic in `api/` is pure: no DOM, no storage, no network. Nothing in `src/` uses `innerHTML`. The design system behind `styles/` is documented in [`design/SYSTEM.md`](design/SYSTEM.md).
 
-### Storage keys
+Storage keys are unchanged from v1, so existing favourites carry over:
 
-Unchanged from v1 so existing data carries over.
-
-| Key | Shape | Cap |
+| Key | Holds | Cap |
 |---|---|---|
-| `pantryRouletteFavorites` | `Recipe[]`, insertion order | 50 (new; the save button tells you when it is full) |
-| `pantryRouletteSeenRecipes` | `string[]` of ids (names for v1 entries), oldest first | 20 |
-| `pantryRouletteRecentlyViewed` | `Recipe[]`, newest first | 5 |
-| `pantryRouletteLookup:<id>` (sessionStorage) | one normalised `Recipe` per TheMealDB id | none; cleared with the tab |
+| `pantryRouletteFavorites` | saved recipes | 50 |
+| `pantryRouletteSeenRecipes` | ids of recipes already shown | 20 |
+| `pantryRouletteRecentlyViewed` | the last picks, newest first | 5 |
+| `pantryRouletteLookup:<id>` (session) | one cached recipe per TheMealDB id | cleared with the tab |
 
-Identity is the TheMealDB `id`; v1 entries (no `id`, no `instructions`, extra score fields) are read and upgraded on the fly and matched by name. Corrupt values are ignored, not thrown.
+## Running locally
 
-## Design decisions
+```sh
+npm install
+npm run dev        # http://localhost:5173
+npm test           # vitest run
+npm run typecheck  # tsc --noEmit
+npm run build      # typecheck, then vite build → dist/
+npm run preview    # serve dist/ on http://localhost:4173
+```
 
-Every decision made during the rebuild, with its reasoning, is in [`handoff/DECISIONS.md`](handoff/DECISIONS.md). The longer narrative is in [`REPORT.md`](REPORT.md). New decisions go in `DECISIONS.md` with a why.
+The manual test rounds, with expected results, are in [`docs/MANUAL_TEST.md`](docs/MANUAL_TEST.md). What changed in each release is in [`CHANGELOG.md`](CHANGELOG.md) and what comes next is in [`ROADMAP.md`](ROADMAP.md).
 
-## Other docs
+## License
 
-- [`design/SYSTEM.md`](design/SYSTEM.md): the design system the UI is built on; tokens, type, motion, components.
-- [`design/SERVINGS_SPIKE.md`](design/SERVINGS_SPIKE.md): can MealDB measures be scaled? Go, with caveats; nothing built.
-- [`design/mockups/`](design/mockups/): the three directions Ryan chose from.
-- [`handoff/`](handoff/): the pack to take to the production repo.
-- [`BUGS_RESOLVED.md`](BUGS_RESOLVED.md): the 24 bugs, each mapped to the commit and file that fixes it. Primary input to the hand-code spec.
-- [`REPORT.md`](REPORT.md): builder notes, disagreements with the scout handoff, open questions.
-- [`CHANGELOG.md`](CHANGELOG.md): what was built and why, as an informal record.
-- [`ROADMAP.md`](ROADMAP.md): experiments to run next, starting with the redesign.
-- [`docs/MANUAL_TEST.md`](docs/MANUAL_TEST.md): Ryan's manual test rounds and results; Round 3 covers the redesigned UI.
+Source is public for reference and portfolio purposes. All rights reserved; see [LICENSE](LICENSE).
 
-## Manual smoke test
+## Contact
 
-See `docs/MANUAL_TEST.md`, Rounds 3 and 4. It covers the spin, the dial, the sheet, a keyboard-only walk, reduced motion, and two break-it-on-purpose checks, each with the expected result.
-
-## Licence
-
-MIT
+Built by Ryan Christian. Questions and feedback: [support@pantryroulette.com](mailto:support@pantryroulette.com).

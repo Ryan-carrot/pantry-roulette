@@ -1,8 +1,6 @@
 # Bugs resolved
 
-> This document is primary input to the hand-code spec (`handoff/HANDCODE_SPEC.md`). Each row names the sandbox file that shows a working fix; the spec says how to carry it into the vanilla production app, and `handoff/ISSUES_TO_CREATE.md` has ready-to-paste GitHub issues for the rows that do not have one yet (#13 to #24).
-
-Every item from the scout's HANDOFF.md §11, plus #24 from manual testing, with the commit and file that addresses it. Commits are on the `rebuild/v2` branch of this sandbox.
+Every bug found in the v1 code review (items 1 to 23), plus #24 from manual testing, with the commit and file that fixes it in 2.0. Commit hashes are from the rebuild history in this repo.
 
 | Commit | Phase |
 |---|---|
@@ -21,7 +19,7 @@ Every item from the scout's HANDOFF.md §11, plus #24 from manual testing, with 
 | 5 | Modal did not return focus | Fixed | `c8532d9` `src/ui/modal.ts` returns focus to the trigger on close button, Escape and backdrop click; tested for all three |
 | 6 | Unguarded `JSON.parse` broke page load | Fixed | `3a3c973` `src/storage/storage.ts` wraps reads in try/catch; `src/storage/recipeCodec.ts` validates shape and discards entries without a name |
 | 7 | `innerHTML` with interpolated API strings | Fixed | `c8532d9` `src/ui/el.ts` and every renderer build DOM with `createElement`/`textContent`; `grep innerHTML src` is empty and tests feed `<b>` and `"` through names |
-| 8 | Hardcoded 30-minute cook time | Fixed | `21f6b03` drops `time` from `Recipe`; `c8532d9` removes the pill from card, modal, favourites and print. Estimation is deferred to REPORT.md |
+| 8 | Hardcoded 30-minute cook time | Fixed | `21f6b03` drops `time` from `Recipe`; `c8532d9` removes the pill from card, modal, favourites and print. An honest estimate was added later as `src/core/cookTime.ts` (`16e9f62`) |
 | 9 | Favourites had no cap | Fixed | `3a3c973` `src/storage/favourites.ts` caps at 50 and returns `'full'` so the UI can say so instead of silently dropping one |
 | 10 | Debug `console.log` | Fixed | No `console.*` anywhere in `src/` |
 | 11 | Button labels drifted between HTML and JS | Fixed | `c8532d9` `src/main.ts` reads the idle labels from the HTML; reset keeps its SVG and swaps only a text span; the save button uses one saved label in both paths |
@@ -35,6 +33,6 @@ Every item from the scout's HANDOFF.md §11, plus #24 from manual testing, with 
 | 19 | `idMeal` discarded | Fixed | `21f6b03` captures `id` on every recipe; identity commit `src/core/identity.ts` (`recipeKey`, `sameRecipe`, `isSeen`) keys favourites, seen and recently viewed by id, falling back to name only for legacy v1 entries that have none. Two meals sharing a title no longer collide; existing localStorage keeps working with no migration |
 | 20 | Spin scores persisted into favourites and recently viewed | Fixed | `21f6b03` `ScoredRecipe` wraps a `Recipe` instead of extending it; `3a3c973` `toStoredRecipe` writes only the `Recipe` shape |
 | 21 | Fazier link without `rel=noopener`, doubled slash | Fixed | `c8532d9` `index.html` |
-| 22 | CRLF churn, no `.gitattributes`, `favicon_io.zip` in root, no preconnect, no noscript | Fixed, one leftover | `e92c836` adds `.gitattributes` (`* text=auto eol=lf`), `.editorconfig`, ignores for the zip and `Zone.Identifier` files; `c8532d9` adds preconnect and noscript. The zip and the old v1 source files are still in the working tree because this session could not delete them; see REPORT.md |
+| 22 | CRLF churn, no `.gitattributes`, `favicon_io.zip` in root, no preconnect, no noscript | Fixed | `e92c836` adds `.gitattributes` (`* text=auto eol=lf`), `.editorconfig`, ignores for the zip and `Zone.Identifier` files; `c8532d9` adds preconnect and noscript. The old v1 source files were removed in `1a1f2f8` |
 | 23 | Dead statements and duplicate selectors | Fixed | Not reproduced in the rebuilt stylesheets |
 | 24 | Nondeterministic pick on tied scores (found in manual testing, not in the handoff): `chicken, garlic, lemon` gave "Banana Pancakes" cold and "Apple Pie" after clearing history | Fixed | `2db8941` `compareScored` in `src/core/scoring.ts` orders by blended score desc, matched count desc, name asc; `tests/spin.test.ts` runs the cold and cached paths with different lookup timing and asserts the same pick. `src/api/loadRecipes.ts` was already in candidate order on both paths, now pinned by tests |

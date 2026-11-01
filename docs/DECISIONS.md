@@ -1,6 +1,6 @@
 # Decisions
 
-Every design decision made during the rebuild, one per line, with the reasoning. Grouped by module. Commit hashes are on the sandbox's `rebuild/v2` branch. When something in `HANDCODE_SPEC.md` looks arbitrary, the line for it is here.
+Every design decision behind 2.0, one per line, with the reasoning, grouped by module and in the order the work happened. Commit hashes are from the rebuild history in this repo. The early sections describe a phase when the rebuild was a local experiment that was not expected to ship; they are kept as written because they explain why things are the way they are. New decisions go at the end.
 
 ## Project and repository
 
@@ -138,3 +138,14 @@ Every design decision made during the rebuild, one per line, with the reasoning.
 - **Ranges take the low end** ("1-2 cloves" → 1). Scaling the low end is the conservative choice; the high end can be reintroduced later as a second field.
 - **The spike's bar was quantity rate, not unit rate.** Scaling needs a number; a unit is only needed for conversion, which a servings control does not do. 90.8% clears the 85% bar; the misses are strings that should not scale anyway.
 - **No servings control**, per the brief. The real question the spike surfaced is that MealDB has no base servings, so any control is a multiplier with an assumed base; that is design work for the production app, not the sandbox.
+
+## Publication as 2.0.0
+
+- **The rebuild ships as 2.0.0, with its commit history.** It replaces the v1 app at pantryroulette.com. The history shows how it was built, which is part of the point of publishing it. Ryan's decision.
+- **Proprietary, not MIT.** The source is public for reference and portfolio purposes; `LICENSE` reserves all rights. v1's `package.json` said MIT; that field is removed rather than changed to a licence identifier, since npm publishing is not a use.
+- **Private planning moved out of the repo, history not rewritten.** The hand-code spec, its issue drafts, the reference map, the rebuild report and the internal roadmap now live outside the repo. Their old versions remain in past commits; rewriting history to remove them would break every hash quoted in `BUGS_RESOLVED.md` and in this file.
+- **The hand-code plan is retired.** `core/` and `api/` will be rewritten by hand after launch, as ownership work, with the existing tests as the contract.
+- **A public `ROADMAP.md`** in plain language for people who use the app, not the internal experiment list.
+- **The design brief stays public** as `design/brief/DESIGN_BRIEF.md`; it is the first artifact of the process the README describes.
+- **Social and search tags restored** (`og:*`, `twitter:*`, canonical, sitemap, `CNAME`) now that this is the public site. The `og:image` URL points at a PNG Ryan adds himself.
+- **Agents work on feature branches and never push** (`CLAUDE.md`). Ryan reviews and pushes.

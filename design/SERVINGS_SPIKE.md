@@ -6,7 +6,7 @@ A go / no-go on a servings control, not a feature. The question: if the user tap
 
 `src/core/measurements.ts` (`parseMeasure`, pure, 27 unit tests) turns a MealDB measure string into `{ qty, unit, raw }`: integers, decimals, unicode and ASCII fractions ("¾", "1/2", "1 1/2", "2½"), ranges ("1-2" and "1–2" take the low end), and a table of common units with plurals and abbreviations folded to one spelling. Vague units ("pinch", "sprig", "handful", "dash") keep their quantity but report no unit, so a scaler can multiply "2 sprigs" without pretending to know what a sprig weighs.
 
-Sample: 50 random recipes from `random.php` (the sandbox's lookup cache lives in the browser, so the script fetched fresh), 467 measure strings, run through the parser from a Node script in the scratchpad on 2026-10-27.
+Sample: 50 random recipes from `random.php` (the app's lookup cache lives in the browser, so the script fetched fresh), 467 measure strings, run through the parser from a Node script in the scratchpad on 2026-10-27.
 
 ## Result
 

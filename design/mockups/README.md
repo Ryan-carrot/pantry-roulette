@@ -1,6 +1,6 @@
 # Three design directions: result card → recipe modal
 
-Static mockups for the redesign experiment in `ROADMAP.md`. Each is one self-contained HTML file that opens straight from disk and walks the whole flow: Spin → spin transition → result card → Open recipe → card-to-modal transition → bottom sheet → Close. Nothing in `src/` changed.
+Static mockups made for the 2.0 redesign, from the brief in `../brief/`. Each is one self-contained HTML file that opens straight from disk and walks the whole flow: Spin → spin transition → result card → Open recipe → card-to-modal transition → bottom sheet → Close. Nothing in `src/` changed.
 
 ## How to view
 
