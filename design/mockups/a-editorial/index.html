@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pantry Roulette, direction A: Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ---------- tokens ---------- */
+:root {
+  --surface: #15120f;       /* page */
+  --elevated: #221d19;      /* card, sheet */
+  --line: #3a332c;          /* dividers, outlines */
+  --text-1: #f4ede4;        /* titles */
+  --text-2: #b9aea1;        /* body */
+  --text-3: #958b7e;        /* captions, numerals */
+  --accent: #e9a23b;        /* one warm action colour (turmeric) */
+  --on-accent: #1a1408;
+  --state: #8fcfb8;         /* one cool colour for state: saved, active vibe */
+  --font: "Instrument Sans", system-ui, sans-serif;
+  --radius: 14px;
+  --ease: cubic-bezier(.2,.8,.2,1);
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--surface); color: var(--text-2); font-family: var(--font); font-size: 17px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
+body { min-height: 100vh; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--state); outline-offset: 3px; }
+img { display: block; max-width: 100%; }
+svg { display: block; }
+
+/* ---------- type scale: 13 / 15 / 17 / 20 / 26 / 34 ---------- */
+h1, h2, h3 { color: var(--text-1); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+.wordmark { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; color: var(--text-1); }
+.title { font-size: 34px; }
+.small { font-size: 15px; }
+.caption { font-size: 13px; color: var(--text-3); }
+
+/* ---------- layout ---------- */
+.page { max-width: 560px; margin: 0 auto; padding: 20px 20px 80px; }
+header.top { display: flex; align-items: baseline; justify-content: space-between; padding: 8px 0 28px; }
+header.top span { color: var(--text-3); font-size: 15px; }
+.stack > * + * { margin-top: 20px; }
+
+/* ---------- input area ---------- */
+label.field { display: block; }
+label.field > span { display: block; color: var(--text-1); font-weight: 500; margin-bottom: 8px; }
+input[type=text] { width: 100%; padding: 14px 16px; font: inherit; color: var(--text-1); background: var(--elevated); border: 1px solid var(--line); border-radius: 10px; }
+input::placeholder { color: var(--text-3); }
+
+/* vibe selector: a disclosure that opens into a wrapped set of chips */
+.vibe { border: 1px solid var(--line); border-radius: 10px; background: var(--elevated); }
+.vibe-summary { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; color: var(--text-1); }
+.vibe-summary em { font-style: normal; color: var(--text-3); margin-right: 8px; font-weight: 400; }
+.vibe-summary strong { font-weight: 500; }
+.vibe-summary svg { transition: transform .2s var(--ease); color: var(--text-3); }
+.vibe[open] .vibe-summary svg { transform: rotate(180deg); }
+.vibe-options { display: none; flex-wrap: wrap; gap: 8px; padding: 4px 12px 14px; }
+.vibe[open] .vibe-options { display: flex; }
+.chip { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-2); font-size: 15px; }
+.chip[aria-pressed=true] { background: var(--text-1); color: var(--surface); border-color: var(--text-1); font-weight: 500; }
+.chip:hover { color: var(--text-1); border-color: var(--text-2); }
+
+.btn-primary { width: 100%; padding: 16px; border-radius: 10px; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 17px; transition: transform .15s var(--ease), filter .15s; }
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:active { transform: scale(.985); }
+.btn-primary[disabled] { cursor: default; filter: saturate(.6); }
+
+/* ---------- result card: a stepping stone ---------- */
+.card { display: none; background: var(--elevated); border-radius: var(--radius); overflow: hidden; }
+.card.show { display: block; animation: rise .5s var(--ease); }
+.card-media { position: relative; aspect-ratio: 16 / 10; background: var(--line); overflow: hidden; }
+.card-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .18s ease; }
+.card-media img.on { opacity: 1; }
+.card-body { padding: 18px 20px 20px; opacity: 0; transform: translateY(6px); transition: opacity .35s var(--ease), transform .35s var(--ease); }
+.card.settled .card-body { opacity: 1; transform: none; }
+.card-body .caption { margin-bottom: 6px; }
+.card-body h2 { font-size: 26px; margin-bottom: 8px; }
+.card-body p.desc { color: var(--text-2); margin-bottom: 14px; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.pill { font-size: 13px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-2); }
+.pill b { color: var(--text-1); font-weight: 600; }
+.card-actions { display: flex; gap: 10px; }
+.card-actions .btn-primary { flex: 1; width: auto; padding: 14px; }
+.btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); color: var(--text-1); font-weight: 500; }
+.btn-ghost[aria-pressed=true] { border-color: var(--state); color: var(--state); }
+.btn-ghost[aria-pressed=true] svg { fill: currentColor; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ---------- the sheet (the star) ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(8,6,4,.72); opacity: 0; pointer-events: none; transition: opacity .32s ease; z-index: 20; }
+.overlay.on { opacity: 1; pointer-events: auto; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: 94vh; overflow-y: auto; background: var(--elevated); border-radius: 22px 22px 0 0; transform: translateY(104%); transition: transform .42s var(--ease); visibility: hidden; }
+.sheet.open { transform: none; visibility: visible; }
+.sheet-media { position: relative; height: min(58vw, 300px); overflow: hidden; }
+.sheet-media img { width: 100%; height: 100%; object-fit: cover; }
+.sheet-media img.hide { visibility: hidden; }
+.sheet-close { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; background: var(--elevated); color: var(--text-1); display: grid; place-items: center; }
+.sheet-body { padding: 0 20px 28px; }
+/* actions sit directly under the image, as in the Eat This Much card */
+.sheet-actions { display: flex; gap: 8px; padding: 14px 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+.sheet-actions .btn-ghost { padding: 10px 14px; }
+.sheet-body .caption { margin-bottom: 6px; }
+.sheet-body h1 { margin-bottom: 14px; }
+.facts { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.facts .time { color: var(--text-1); font-weight: 500; }
+.facts .time span { color: var(--text-3); font-weight: 400; }
+.stepper { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--line); border-radius: 999px; }
+.stepper button { width: 36px; height: 36px; display: grid; place-items: center; color: var(--text-1); border-radius: 50%; }
+.stepper output { min-width: 72px; text-align: center; color: var(--text-1); font-weight: 500; font-size: 15px; }
+.need { color: var(--text-2); margin: 10px 0 26px; }
+.need b { color: var(--text-1); font-weight: 500; }
+.sheet-body h3 { font-size: 20px; margin: 0 0 12px; }
+.ingredients { list-style: none; margin-bottom: 30px; }
+.ingredients li { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding: 7px 0; }
+.ingredients li span:first-child { color: var(--text-3); font-variant-numeric: tabular-nums; }
+.ingredients li span:last-child { color: var(--text-1); }
+.steps { list-style: none; counter-reset: step; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 40px 1fr; gap: 10px; padding: 12px 0; }
+.steps li::before { content: counter(step); color: var(--text-3); font-size: 26px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; padding-top: 2px; }
+.steps li p { color: var(--text-2); font-size: 17px; line-height: 1.55; }
+/* the shared element: a clone of the card image that flies to the sheet header */
+.flyer { position: fixed; z-index: 40; object-fit: cover; border-radius: var(--radius); transition: top .42s var(--ease), left .42s var(--ease), width .42s var(--ease), height .42s var(--ease), border-radius .42s var(--ease); pointer-events: none; }
+
+@media (min-width: 720px) {
+  .sheet { left: 50%; right: auto; bottom: auto; top: 50%; width: min(640px, 92vw); max-height: 88vh; border-radius: 22px; transform: translate(-50%, -46%) scale(.98); opacity: 0; transition: transform .42s var(--ease), opacity .3s ease; }
+  .sheet.open { transform: translate(-50%, -50%); opacity: 1; }
+  .flyer { border-radius: 22px 22px 0 0; }
+}
+@media (max-width: 360px) {
+  html { font-size: 16px; }
+  .title { font-size: 30px; }
+  .card-body h2 { font-size: 24px; }
+  .ingredients li { grid-template-columns: 80px 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card.show, .card-media img, .card-body, .sheet, .overlay, .flyer, .btn-primary, .vibe-summary svg { animation: none; transition: none; }
+}
+
+/* ---------- spec blocks ---------- */
+.spec { margin-top: 64px; padding-top: 28px; border-top: 1px solid var(--line); }
+.spec h2 { font-size: 20px; margin-bottom: 14px; }
+.spec p { margin-bottom: 14px; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+td, th { text-align: left; padding: 9px 6px; vertical-align: top; }
+th { color: var(--text-3); font-weight: 500; }
+td { color: var(--text-2); border-top: 1px solid var(--line); }
+td:first-child { white-space: nowrap; color: var(--text-1); }
+.sw { display: inline-block; width: 18px; height: 18px; border-radius: 4px; vertical-align: -4px; margin-right: 8px; border: 1px solid var(--line); }
+.ts { display: grid; grid-template-columns: 70px 1fr; gap: 6px 14px; align-items: baseline; }
+.ts span { color: var(--text-3); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div class="wordmark">Pantry Roulette</div>
+    <span>Direction A, editorial</span>
+  </header>
+
+  <main class="stack">
+    <label class="field"><span>What's in your pantry?</span>
+      <input type="text" id="ingredients" value="chicken, onion, tomato, yogurt" autocomplete="off">
+    </label>
+
+    <details class="vibe" id="vibe">
+      <summary class="vibe-summary" role="button"><span><em>Vibe</em><strong id="vibe-current">Comfort</strong></span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </summary>
+      <div class="vibe-options" role="group" aria-label="Choose a vibe">
+        <button class="chip" aria-pressed="false">Lazy</button><button class="chip" aria-pressed="false">Simple</button>
+        <button class="chip" aria-pressed="true">Comfort</button><button class="chip" aria-pressed="false">Hearty</button>
+        <button class="chip" aria-pressed="false">Healthy</button><button class="chip" aria-pressed="false">Fun</button>
+        <button class="chip" aria-pressed="false">Classic</button><button class="chip" aria-pressed="false">Fancy</button>
+        <button class="chip" aria-pressed="false">Elegant</button><button class="chip" aria-pressed="false">Impressive</button>
+      </div>
+    </details>
+
+    <button class="btn-primary" id="spin">Spin</button>
+
+    <article class="card" id="card" aria-live="polite">
+      <div class="card-media" id="media">
+        <img src="../shared/alt-1.jpg" alt="">
+        <img src="../shared/alt-2.jpg" alt="">
+        <img src="../shared/sample-recipe.jpg" alt="Chicken Handi in a bowl, with coriander" id="card-img">
+      </div>
+      <div class="card-body">
+        <p class="caption">Tonight</p>
+        <h2 id="card-title">Chicken Handi</h2>
+        <p class="desc">A slow, yogurt-rich curry: fried onions, ginger, toasted cumin and coriander, finished with cream and fenugreek.</p>
+        <div class="pills" aria-label="How this matched">
+          <span class="pill"><b>4 of 16</b> ingredients</span>
+          <span class="pill"><b>62%</b> score</span>
+          <span class="pill"><b>71%</b> comfort</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn-primary" id="open">Open recipe</button>
+          <button class="btn-ghost" id="save-card" aria-pressed="false" aria-label="Save to favourites">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          </button>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <div class="overlay" id="overlay"></div>
+  <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-media">
+      <img src="../shared/sample-recipe.jpg" alt="" id="sheet-img">
+      <button class="sheet-close" id="close" aria-label="Close recipe">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="sheet-actions">
+        <button class="btn-ghost" id="save-sheet" aria-pressed="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>Save</button>
+        <button class="btn-ghost">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>Print</button>
+      </div>
+      <p class="caption">Indian, chicken</p>
+      <h1 class="title" id="sheet-title">Chicken Handi</h1>
+      <div class="facts">
+        <p class="time">30 to 60 min <span>estimated from the steps</span></p>
+        <div class="stepper" aria-label="Servings">
+          <button id="less" aria-label="Fewer servings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <output id="serves">Serves 4</output>
+          <button id="more" aria-label="More servings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div>
+      </div>
+      <p class="need">You'll need <b>a large pot or wok</b> and <b>a bowl for the yogurt</b>.</p>
+
+      <h3>Ingredients</h3>
+      <ul class="ingredients" id="ingredients-list"></ul>
+
+      <h3>Steps</h3>
+      <ol class="steps" id="steps-list"></ol>
+    </div>
+  </section>
+
+  <section class="spec">
+    <h2>Palette</h2>
+    <p>Warm near-black surfaces so the food photo is the only saturated thing on screen. One warm colour for the primary action, one cool colour for state. Ratios measured with the WCAG formula against the surface named in the row.</p>
+    <table>
+      <tr><th>Colour</th><th>Role</th><th>Contrast</th></tr>
+      <tr><td><i class="sw" style="background:#15120f"></i>#15120f</td><td>surface (page)</td><td></td></tr>
+      <tr><td><i class="sw" style="background:#221d19"></i>#221d19</td><td>elevated (card, sheet, inputs)</td><td></td></tr>
+      <tr><td><i class="sw" style="background:#3a332c"></i>#3a332c</td><td>line (outlines, dividers)</td><td></td></tr>
+      <tr><td><i class="sw" style="background:#f4ede4"></i>#f4ede4</td><td>text 1, titles</td><td>16.1 on surface, 14.4 on elevated</td></tr>
+      <tr><td><i class="sw" style="background:#b9aea1"></i>#b9aea1</td><td>text 2, body</td><td>8.6 on surface, 7.7 on elevated</td></tr>
+      <tr><td><i class="sw" style="background:#958b7e"></i>#958b7e</td><td>text 3, captions, step numerals</td><td>5.5 on surface, 4.9 on elevated</td></tr>
+      <tr><td><i class="sw" style="background:#e9a23b"></i>#e9a23b</td><td>accent: the primary action only</td><td>8.6 on surface; #1a1408 text on it 8.5</td></tr>
+      <tr><td><i class="sw" style="background:#8fcfb8"></i>#8fcfb8</td><td>state: saved, active chip, focus ring</td><td>10.5 on surface, 9.4 on elevated</td></tr>
+    </table>
+  </section>
+  <section class="spec">
+    <h2>Type</h2>
+    <p>One family, Instrument Sans, at two weights. It is a geometric grotesque with a slightly narrow set and sharp terminals, so titles read as decisive rather than rounded, and it has real italics and tabular figures for the ingredient measures. Fredoka One made every heading a joke; Nunito's rounded terminals did the same quietly in the body. Instrument Sans at 600 with tight tracking does the display work without a second face.</p>
+    <div class="ts">
+      <span>34 / 600</span><div class="title">Recipe title</div>
+      <span>26 / 600</span><div style="font-size:26px;font-weight:600;color:var(--text-1);letter-spacing:-.02em">Card title, step numerals</div>
+      <span>20 / 600</span><div style="font-size:20px;font-weight:600;color:var(--text-1)">Section headings, wordmark</div>
+      <span>17 / 400</span><div>Body, steps, ingredients, buttons at 600</div>
+      <span>15 / 400</span><div class="small">Chips, table text, secondary labels</div>
+      <span>13 / 400</span><div class="caption">Captions and pills</div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (id) => document.getElementById(id);
+  const recipe = { ingredients: ["chicken","onion","tomato","garlic","ginger paste","vegetable oil","cumin seeds","coriander seeds","turmeric powder","chilli powder","green chilli","yogurt","cream","dried fenugreek","garam masala","salt"],
+    measurements: ["1.2 kg","5, sliced","2, chopped","8 cloves","1 tbsp","¼ cup","2 tsp","3 tsp","1 tsp","1 tsp","2","1 cup","¾ cup","3 tsp","1 tsp","to taste"],
+    steps: ["Take a large pot or wok, big enough to cook all the chicken, and heat the oil in it. Once the oil is hot, add sliced onion and fry them until deep golden brown. Then remove from oil and set aside.","To the same pot, add the chopped garlic and sauté for a minute. Then add the chopped tomatoes and cook until tomatoes turn soft. This would take 5 minutes.","Then return the fried onion to the pot and stir. Add ginger paste and sauté well.","Now add the cumin seeds, half of the coriander seeds and chopped green chillies. Give them a good stir.","Next goes in the spices – turmeric powder and red chilli powder. Sauté the spices well for a minute. Add a tablespoon of water if needed so the spices do not burn.","Add the chicken pieces to the wok, season it with salt to taste and cook the chicken covered on medium heat for 20 minutes, stirring every few minutes.","When the oil separates from the spices, add the beaten yogurt keeping the heat on lowest setting, and half of the dried fenugreek (kasuri methi). Stir until mixed, then cook for 2 to 3 minutes.","Finally add the cream and give a final mix to combine everything well.","Sprinkle the remaining kasuri methi and garam masala and serve the chicken handi hot with naan or paratha."] };
+  const ul = $('ingredients-list'), ol = $('steps-list');
+  recipe.ingredients.forEach((ing, i) => { const li = document.createElement('li'); const m = document.createElement('span'); m.textContent = recipe.measurements[i]; const n = document.createElement('span'); n.textContent = ing; li.append(m, n); ul.append(li); });
+  recipe.steps.forEach((s) => { const li = document.createElement('li'); const p = document.createElement('p'); p.textContent = s; li.append(p); ol.append(li); });
+
+  /* vibe chips */
+  const chips = [...document.querySelectorAll('.chip')];
+  chips.forEach((c) => c.addEventListener('click', () => { chips.forEach((o) => o.setAttribute('aria-pressed', 'false')); c.setAttribute('aria-pressed', 'true'); $('vibe-current').textContent = c.textContent; $('vibe').removeAttribute('open'); document.querySelector('.pill:last-child b').textContent = '71%'; document.querySelector('.pill:last-child').lastChild.textContent = ' ' + c.textContent.toLowerCase(); }));
+
+  /* spin: the card arrives and its image shuffles through candidates before settling */
+  const card = $('card'), imgs = [...$('media').querySelectorAll('img')], spin = $('spin');
+  spin.addEventListener('click', () => {
+    card.classList.remove('settled'); card.classList.add('show'); spin.disabled = true; spin.textContent = 'Spinning';
+    imgs.forEach((i) => i.classList.remove('on'));
+    const order = [0, 1, 0, 2];
+    if (reduce) { imgs[2].classList.add('on'); card.classList.add('settled'); spin.disabled = false; spin.textContent = 'Spin again'; return; }
+    order.forEach((idx, n) => setTimeout(() => { imgs.forEach((i) => i.classList.remove('on')); imgs[idx].classList.add('on'); if (n === order.length - 1) { card.classList.add('settled'); spin.disabled = false; spin.textContent = 'Spin again'; card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }, 220 + n * 260));
+  });
+
+  /* card → sheet: the card image flies up and becomes the sheet's header (shared element) */
+  const sheet = $('sheet'), overlay = $('overlay'), sheetImg = $('sheet-img');
+  let returnTo = null;
+  function openSheet(trigger) {
+    returnTo = trigger; overlay.classList.add('on'); document.body.style.overflow = 'hidden';
+    if (reduce) { sheet.classList.add('open'); $('close').focus(); return; }
+    const from = $('card-img').getBoundingClientRect();
+    sheet.style.transition = 'none'; sheet.style.visibility = 'visible'; sheet.style.transform = 'none'; sheet.style.opacity = '1';
+    const to = sheetImg.getBoundingClientRect();
+    sheet.style.transform = ''; sheet.style.opacity = ''; sheet.style.visibility = ''; void sheet.offsetHeight; sheet.style.transition = '';
+    const fly = $('card-img').cloneNode(); fly.className = 'flyer'; fly.removeAttribute('id'); fly.alt = '';
+    Object.assign(fly.style, { top: from.top + 'px', left: from.left + 'px', width: from.width + 'px', height: from.height + 'px' });
+    document.body.append(fly); sheetImg.classList.add('hide');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      Object.assign(fly.style, { top: to.top + 'px', left: to.left + 'px', width: to.width + 'px', height: to.height + 'px' });
+      sheet.classList.add('open');
+    }));
+    setTimeout(() => { sheetImg.classList.remove('hide'); fly.remove(); $('close').focus(); }, 460);
+  }
+  function closeSheet() { sheet.classList.remove('open'); overlay.classList.remove('on'); document.body.style.overflow = ''; if (returnTo) returnTo.focus(); }
+  $('open').addEventListener('click', (e) => openSheet(e.currentTarget));
+  $('close').addEventListener('click', closeSheet); overlay.addEventListener('click', closeSheet);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheet.classList.contains('open')) closeSheet(); });
+
+  /* save state is shared between card and sheet; servings stepper is visual only */
+  const saves = [$('save-card'), $('save-sheet')];
+  saves.forEach((b) => b.addEventListener('click', () => { const on = b.getAttribute('aria-pressed') !== 'true'; saves.forEach((s) => { s.setAttribute('aria-pressed', String(on)); if (s.id === 'save-sheet') s.lastChild.textContent = on ? 'Saved' : 'Save'; }); }));
+  let n = 4; const out = $('serves');
+  $('less').addEventListener('click', () => { n = Math.max(1, n - 1); out.textContent = 'Serves ' + n; });
+  $('more').addEventListener('click', () => { n = Math.min(12, n + 1); out.textContent = 'Serves ' + n; });
+})();
+</script>
+</body>
+</html>

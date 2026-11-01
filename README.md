@@ -1,102 +1,75 @@
-# 🎰 Pantry Roulette
+# Pantry Roulette
 
-**Spin the wheel. Feed yourself.**
+Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight.
 
-Pantry Roulette isn't your typical recipe app — it's a constraint-based meal suggester. Tell it what's in your fridge, pick a vibe, and let it spin up something you can actually make tonight.
+**[pantryroulette.com](https://pantryroulette.com)**
 
-🌐 **[pantryroulette.com](https://pantryroulette.com)**
+## What it does
 
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+Type the ingredients you have, separated by commas, set the vibe dial (Lazy, Simple, Comfort, Hearty, Healthy, Fun, Classic, Fancy, Elegant, Impressive) and hit Spin. The reel runs through real recipes from [TheMealDB](https://www.themealdb.com) that use your ingredients and lands on the one that best fits both your pantry and your mood. Open it and you get everything you need to cook from your phone: ingredients you can tick off as they go in the pan, numbered steps in large type, a rough cook-time estimate, and Save, Print and Close within reach of your thumb. It won't show you the same recipe twice until you clear your history, and "Surprise me" skips the typing altogether. Saved recipes and your recent picks stay on your device; there is no account.
 
----
+## How this was built
 
-## 🍳 What is Pantry Roulette?
+Ryan wrote the design brief and the spec, built the v1 app by hand, and ran a code review of it. He then directed AI agents (Claude Code) through a phased rebuild in TypeScript, with tests written at every phase and four rounds of manual QA on a real phone between passes. The process is all in the repo: the brief, the three design directions he chose between and the resulting design system in [`design/`](design/), the decision log and manual test rounds in [`docs/`](docs/), every v1 bug and the commit that fixed it in [`BUGS_RESOLVED.md`](BUGS_RESOLVED.md), and the commit history itself. The core logic modules are being rewritten by hand as ongoing ownership work, with the test suite as the contract.
 
-Most meal planning tools are built for discovery, not execution. They assume you have everything already. Pantry Roulette works the other way — it starts with what you actually have and finds the best possible meal from there.
+## Stack
 
-Enter your ingredients, pick a vibe, and hit spin. The app queries a live recipe database, scores every result against your ingredients and chosen vibe, filters out things you've already seen, and serves up the best match — complete with a full recipe, ingredients list, measurements, and step by step instructions.
+- [Vite](https://vite.dev) with vanilla TypeScript in strict mode (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`)
+- [Vitest](https://vitest.dev) for unit tests, with happy-dom for the DOM tests
+- No UI framework, component library or CSS framework
+- Google Fonts: Bricolage Grotesque (display) and Archivo (body)
+- Static build, hosted on GitHub Pages
 
----
-
-## ✨ Features
-
-- **Multi-ingredient search** — Enter as many ingredients as you have. Every ingredient queries the API independently and results are merged and deduplicated for a richer pool.
-- **10 vibe profiles** — Lazy, Impressive, Hearty, Fun, Healthy, Comfort, Fancy, Elegant, Classic, and Simple. Each vibe uses a custom keyword and structural scoring engine to find the most relevant match.
-- **Smart scoring** — Recipes are ranked by a blended score combining ingredient match percentage and vibe alignment. The best match wins.
-- **Diversity filter** — A seen recipe tracker ensures you get fresh results every spin. Previously seen recipes are penalised in scoring so new options surface naturally.
-- **Full recipe modal** — View the complete recipe without leaving the app. Ingredients with measurements, numbered step by step instructions, and the meal image all in one place.
-- **Save to Favourites** — Save recipes you love with a single click. Favourites persist across sessions via localStorage.
-- **Fully accessible** — Keyboard navigable, ARIA labelled, screen reader tested with NVDA and Windows Narrator, and WCAG AA colour contrast compliant.
-- **Fully responsive** — Tested from 320px (iPhone 4) to desktop. Looks great on everything in between.
-- **No frameworks, no build tools** — Pure HTML, CSS, and JavaScript. Open and go.
-
----
-
-## 🌐 Live App
-
-👉 **[pantryroulette.com](https://pantryroulette.com)**
-
----
-
-## 🚀 Getting Started
-
-```bash
-git clone https://github.com/Ryan-carrot/pantry-roulette.git
-cd pantry-roulette
-```
-
-Open `index.html` in your browser. No installs, no dependencies, no setup.
-
----
-
-## 📁 Project Structure
+## Architecture
 
 ```
-pantry-roulette/
-├── index.html        # App structure and semantic markup
-├── style.css         # Dark theme, animations, responsive layout
-├── app.js            # Core logic — API calls, scoring, DOM updates, modal, favourites
-├── recipes.js        # Local recipe database with vibes and ingredients
-├── vibes.js          # Vibe profiles and keyword scoring engine
-├── og-image.png      # Open Graph social preview image
-├── sitemap.xml       # Sitemap for search engine indexing
-└── README.md         # You are here
+src/
+  main.ts                 wires storage, API and UI together; the spin and surprise flows
+  types.ts                Recipe, ScoredRecipe, VibeKey, VibeProfile, MealDB shapes
+  api/mealdb.ts           fetch client (15s timeout), interleave, dedup, cap
+  api/loadRecipes.ts      candidates → recipes via the session cache
+  api/surprise.ts         one random recipe, re-rolled past ones you've seen
+  core/normalize.ts       MealDB meal → Recipe
+  core/vibes.ts           the ten vibe profiles and the vibe score
+  core/scoring.ts         ingredient overlap, blend, seen exclusion, tiebreak, pick
+  core/identity.ts        recipe identity by id, with a name fallback for old saves
+  core/cookTime.ts        instruction text → under 30 / 30–60 / over 60 min estimate
+  core/measurements.ts    measure string → quantity and unit (groundwork for servings)
+  storage/                localStorage and sessionStorage wrappers; every read guarded and validated
+  ui/                     dial, reel, result card, recipe sheet, saved, recent, print
+  styles/tokens.css       every colour, size, radius and motion value
+  styles/*.css            one file per component
+tests/                    one file per module
 ```
 
----
+Everything under `core/` and the merge logic in `api/` is pure: no DOM, no storage, no network. Nothing in `src/` uses `innerHTML`. The design system behind `styles/` is documented in [`design/SYSTEM.md`](design/SYSTEM.md).
 
-## 🔌 API
+Storage keys are unchanged from v1, so existing favourites carry over:
 
-Pantry Roulette is powered by the **[TheMealDB API](https://www.themealdb.com/)** — a free, open source meal database with thousands of recipes, ingredient lists, measurements, and instructions.
+| Key | Holds | Cap |
+|---|---|---|
+| `pantryRouletteFavorites` | saved recipes | 50 |
+| `pantryRouletteSeenRecipes` | ids of recipes already shown | 20 |
+| `pantryRouletteRecentlyViewed` | the last picks, newest first | 5 |
+| `pantryRouletteLookup:<id>` (session) | one cached recipe per TheMealDB id | cleared with the tab |
 
-- Each ingredient is queried independently via `/filter.php?i={ingredient}`
-- Full recipe details are fetched via `/lookup.php?i={id}`
-- Results are merged, deduplicated, normalised, and scored locally
+## Running locally
 
----
+```sh
+npm install
+npm run dev        # http://localhost:5173
+npm test           # vitest run
+npm run typecheck  # tsc --noEmit
+npm run build      # typecheck, then vite build → dist/
+npm run preview    # serve dist/ on http://localhost:4173
+```
 
-## 📝 Technical Notes
+The manual test rounds, with expected results, are in [`docs/MANUAL_TEST.md`](docs/MANUAL_TEST.md). What changed in each release is in [`CHANGELOG.md`](CHANGELOG.md) and what comes next is in [`ROADMAP.md`](ROADMAP.md).
 
-- **Case-insensitive matching** — All inputs and recipe ingredients are normalised to lowercase before comparison.
-- **Vibe scoring** — Each vibe profile defines keyword sets, ingredient count thresholds, and instruction length signals. Recipes are scored against these profiles and the result is blended 50/50 with the ingredient match score.
-- **Diversity filter** — Seen recipes are stored in localStorage and capped at 20 entries. Previously seen recipes receive a 0.3x score multiplier, pushing fresher results to the top.
-- **Focus trapping** — The recipe modal implements full keyboard focus trapping for accessibility compliance.
-- **No backend** — All state is managed client-side via localStorage. No server, no database, no authentication required.
+## License
 
----
+Source is public for reference and portfolio purposes. All rights reserved; see [LICENSE](LICENSE).
 
-## 🔮 What's Next
+## Contact
 
-- **Backend & database** — Move favourites and seen recipes to a real database for cross-device persistence
-- **User accounts & authentication** — Let users save profiles, meal histories, and preferences
-- **Fuzzy ingredient matching** — Match "cheddar" to "cheese" and "spring onion" to "scallion" for smarter scoring
-- **Meal planning** — Save a week's worth of meals and generate a consolidated shopping list
-- **Nutritional information** — Surface calorie counts and macro breakdowns alongside recipes
-
----
-
-## 👤 Author
-
-Built by Ryan — a front end developer learning by building things that actually solve problems.
+Built by Ryan Christian. Questions and feedback: [support@pantryroulette.com](mailto:support@pantryroulette.com).

@@ -1,0 +1,64 @@
+/* header, ingredient input, the vibe dial, the spin button */
+header.top { padding: var(--space-2) 0 var(--space-7); }
+.wordmark { font-size: var(--size-22); font-weight: 800; font-variation-settings: "opsz" 96; }
+.tagline { color: var(--text-3); font-size: var(--size-14); margin-top: var(--space-1); }
+
+.field { display: block; }
+.field-label { display: block; color: var(--text-2); font-size: var(--size-14); margin-bottom: var(--space-2); }
+.field-hint { display: block; color: var(--text-3); font-size: var(--size-13); margin-top: var(--space-2); }
+input[type=text] {
+  width: 100%; padding: 14px 16px; font: inherit; color: var(--text-1);
+  background: var(--elevated); border: 1px solid var(--line); border-radius: var(--radius-control);
+}
+input[type=text]::placeholder { color: var(--text-3); }
+input[type=text]:focus-visible { outline-offset: 2px; }
+
+/* the dial */
+.vibe { position: relative; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--elevated); padding: 10px 0 8px; min-width: 0; }
+.vibe-head { display: flex; align-items: baseline; gap: var(--space-2); padding: 0 14px 6px; font-size: var(--size-14); color: var(--text-3); }
+.vibe-legend { float: left; color: var(--text-2); }
+.vibe-hint { flex: 1; }
+.vibe-toggle { color: var(--text-2); font-size: var(--size-14); text-decoration: underline; text-underline-offset: 3px; }
+.vibe-marker { position: absolute; left: 50%; top: 0; width: 2px; height: 8px; background: var(--accent); transform: translateX(-50%); border-radius: 0 0 2px 2px; }
+.vibe-all .vibe-marker { display: none; }
+.vibe-rail { display: flex; gap: var(--space-2); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 6px calc(50% - 60px); }
+.vibe-rail::-webkit-scrollbar { display: none; }
+.vibe-item { flex: none; width: 120px; scroll-snap-align: center; position: relative; }
+.vibe-input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.vibe-name {
+  display: block; padding: 10px 0; text-align: center; border-radius: var(--radius-row);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--size-20); color: var(--text-3);
+  transition: color var(--quick), background var(--quick), transform var(--quick);
+}
+.vibe-input:checked + .vibe-name { color: var(--on-accent); background: var(--accent); transform: scale(1.02); }
+.vibe-input:focus-visible + .vibe-name { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* "see all": the rail becomes a grid */
+.vibe-all .vibe-rail { display: grid; grid-template-columns: repeat(2, 1fr); overflow: visible; padding: 10px 12px 6px; }
+.vibe-all .vibe-item { width: auto; }
+.vibe-all .vibe-name { text-align: left; padding: 12px; background: var(--raised); color: var(--text-2); font-size: var(--size-18); transform: none; }
+.vibe-all .vibe-input:checked + .vibe-name { background: var(--accent); color: var(--on-accent); }
+
+.btn-spin {
+  width: 100%; padding: 16px; border-radius: var(--radius-control);
+  background: var(--accent); color: var(--on-accent);
+  font-family: var(--font-display); font-weight: 800; font-size: var(--size-20); letter-spacing: -0.01em;
+  transition: transform var(--quick);
+}
+.btn-spin:active { transform: scale(0.985); }
+.btn-spin:focus-visible { outline-color: var(--text-1); }
+.btn-spin:disabled { background: var(--raised); color: var(--text-3); }
+
+/* surprise me: a secondary text link under Spin, never a second primary */
+.surprise { text-align: center; margin-top: var(--space-3); }
+.btn-link { color: var(--text-2); font-size: var(--size-15); text-decoration: underline; text-underline-offset: 3px; padding: var(--space-1) var(--space-2); border-radius: 4px; }
+.btn-link:hover { color: var(--text-1); }
+.btn-link:disabled { color: var(--text-3); text-decoration: none; }
+
+/* clear seen history */
+.history { padding-top: var(--space-3); }
+.btn-text { display: inline-flex; align-items: center; gap: var(--space-3); color: var(--text-2); font-size: var(--size-15); font-weight: 500; padding: var(--space-2) 0; }
+.btn-text:hover { color: var(--text-1); }
+
+@media (min-width: 720px) {
+  .vibe-all .vibe-rail { grid-template-columns: repeat(5, 1fr); }
+}

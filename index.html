@@ -1,169 +1,123 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="title" content="Pantry Roulette">
-    <meta name="description" content="Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight.">
-    <meta name="keywords" content="recipe finder, meal ideas, cooking, pantry, ingredients, recipe generator">
-    <meta name="author" content="Ryan">
-    <meta name="robots" content="index, follow">
-    <meta name="theme-color" content="#ff6b35">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://pantryroulette.com/">
-    <meta property="og:title" content="Pantry Roulette 🎰">
-    <meta property="og:description" content="Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight.">
-    <meta property="og:image" content="https://pantryroulette.com/og-image.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://pantryroulette.com/">
-    <meta name="twitter:title" content="Pantry Roulette 🎰">
-    <meta name="twitter:description" content="Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight.">
-    <meta name="twitter:image" content="https://pantryroulette.com/og-image.png">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight." />
+    <meta name="author" content="Ryan" />
+    <meta name="theme-color" content="#100c18" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://pantryroulette.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pantryroulette.com/" />
+    <meta property="og:site_name" content="Pantry Roulette" />
+    <meta property="og:title" content="Pantry Roulette" />
+    <meta property="og:description" content="Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight." />
+    <meta property="og:image" content="https://pantryroulette.com/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://pantryroulette.com/" />
+    <meta name="twitter:title" content="Pantry Roulette" />
+    <meta name="twitter:description" content="Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can actually make tonight." />
+    <meta name="twitter:image" content="https://pantryroulette.com/og-image.png" />
     <title>Pantry Roulette</title>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="style.css">
-</head>
-    <body>
-        <a href="#main-content" class="skip-link">Skip to main content</a>
-        <div class="container">
-            <header class="hero">
-                <h1>
-                    <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-                    </svg>
-                    Pantry Roulette
-                </h1>
-                <p class="subtitle">Spin the wheel. Feed yourself.</p>
-            </header>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div class="page">
+      <header class="top">
+        <h1 class="wordmark">Pantry Roulette</h1>
+        <p class="tagline">Spin the wheel. Feed yourself.</p>
+      </header>
 
-            <main class="card" id="main-content">
-                <div class="input-group">
-                    <label for="ingredients">What's in your pantry?</label>
-                    <input
-                        type="text"
-                        id="ingredients"
-                        placeholder="e.g. eggs, butter, pasta"
-                        autocomplete="off"
-                        aria-describedby="ingredients-hint"
-                    />
-                    <p id="ingredients-hint" class="input-hint">Enter ingredients separated by commas</p>
-                </div>
+      <main id="main-content" class="stack" tabindex="-1">
+        <noscript><p class="notice">Pantry Roulette needs JavaScript to look up recipes.</p></noscript>
 
-                <div class="input-group">
-                    <label for="vibe">What's the vibe?</label>
-                    <select id="vibe" aria-label="Select a cooking vibe">
-                        <option value="lazy">Lazy</option>
-                        <option value="impressive">Impressive</option>
-                        <option value="hearty">Hearty</option>
-                        <option value="fun">Fun</option>
-                        <option value="healthy">Healthy</option>
-                        <option value="comfort">Comfort</option>
-                        <option value="fancy">Fancy</option>
-                        <option value="elegant">Elegant</option>
-                        <option value="classic">Classic</option>
-                        <option value="simple">Simple</option>
-                    </select>
-                </div>
+        <label class="field" for="ingredients">
+          <span class="field-label">What's in the pantry</span>
+          <input type="text" id="ingredients" placeholder="e.g. eggs, butter, pasta" autocomplete="off" aria-describedby="ingredients-hint" />
+          <span id="ingredients-hint" class="field-hint">Separate ingredients with commas</span>
+        </label>
 
-                <button id="spin-btn" aria-label="Spin to find a recipe">
-                    <span id="btn-text">Spin the Pantry</span>
-                </button>
+        <fieldset class="vibe" id="vibe">
+          <legend class="vibe-legend">Vibe</legend>
+        </fieldset>
 
-                <button id="reset-seen-btn" class="reset-btn" aria-label="Reset recipe suggestions history">
-                    <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
-                    </svg>
-                    Reset Suggestions
-                </button>
-            </main>
+        <button id="spin-btn" type="button" class="btn-spin"><span id="btn-text">Spin</span></button>
+        <p class="surprise"><button id="surprise-btn" type="button" class="btn-link">Surprise me</button></p>
 
-            <div
-                id="result"
-                class="result-card hidden"
-                aria-live="polite"
-                aria-atomic="true"
-                role="region"
-                aria-label="Recipe result"
-            ></div>
-            <section id="recently-viewed-section" class="recently-viewed-section hidden" aria-label="Recently viewed recipes">
-                <h2 class="recently-viewed-title">
-                    <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                    <path d="M3 3v5h5"/>
-                    <path d="M12 7v5l4 2"/>
-                    </svg>
-                    Recently Viewed
-                </h2>
-                <div id="recently-viewed-list" class="recently-viewed-list"></div>
-            </section>
-            <section id="favorites-section" class="favorites-section" aria-label="Your saved favorite recipes">
-                <h2 class="favorites-title">
-                    <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                    </svg>
-                    Your Favorites
-                </h2>
-                <div id="favorites-list" class="favorites-list"></div>
-                <p id="favorites-empty" class="no-match hidden">No favorites saved yet. Spin to find something you love!</p>
-            </section>
-            <div id="recipe-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-body">
-                <div class="modal-card" id="modal-card">
-                    <div id="modal-body">
-                        <div class="modal-image-wrap">
-                            <img id="modal-image" src="" alt="" class="modal-img hidden" />
-                            <div class="modal-header-btns">
-                                <button class="modal-print-btn" id="modal-print-btn" aria-label="Print this recipe">
-                                    <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                                        <path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/>
-                                        <rect x="6" y="14" width="12" height="8" rx="1"/>
-                                    </svg>
-                                </button>
-                                <button class="modal-close-btn" id="modal-close-btn" aria-label="Close recipe modal">
-                                    <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="modal-content">
-                            <p id="modal-category" class="modal-category"></p>
-                            <h2 id="modal-title" class="modal-title"></h2>
-                            <div class="modal-meta">
-                                <span class="meta-time">30 mins</span>
-                            </div>
-                            <div class="modal-section">
-                                <h3>Ingredients</h3>
-                                <ul id="modal-ingredients" class="modal-ingredients-list"></ul>
-                            </div>
-                            <div class="modal-section">
-                                <h3>Instructions</h3>
-                                <ol id="modal-steps" class="modal-steps-list"></ol>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <footer class="site-footer">
-                <p>
-                    Built by Ryan &nbsp;·&nbsp;
-                    <a href="mailto:support@pantryroulette.com">support@pantryroulette.com</a>
-                    &nbsp;·&nbsp;
-                    <a href="https://github.com/Ryan-carrot/pantry-roulette" target="_blank" rel="noopener">GitHub</a>
-                </p>
-                <div class="footer-badges">
-                    <a href="https://fazier.com/launches/pantryroulette.com" target="_blank">
-                    <img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=dark" width="250" alt="Featured on Fazier" />
-                    </a>
-                </div>
-            </footer>
+        <div class="reel hidden" id="reel" aria-hidden="true">
+          <div class="payline"></div>
+          <div class="strip" id="strip"></div>
         </div>
-        <script src="vibes.js"></script>
-        <script src="recipes.js"></script>
-        <script src="app.js"></script>
-    </body>
+
+        <div id="result" class="result hidden" aria-live="polite" aria-atomic="true" role="region" aria-label="Recipe result" tabindex="-1"></div>
+
+        <section id="recently-viewed-section" class="recent hidden" aria-label="Recently viewed recipes">
+          <h2 class="section-title">Recently viewed</h2>
+          <div id="recently-viewed-list" class="recent-list"></div>
+        </section>
+
+        <section id="favorites-section" class="favourites" aria-label="Your saved recipes">
+          <h2 class="section-title">Saved</h2>
+          <div id="favorites-list" class="favourites-list"></div>
+          <p id="favorites-empty" class="empty hidden">Nothing saved yet. Spin, then save what looks good.</p>
+        </section>
+
+        <div class="history">
+          <button id="clear-history-btn" type="button" class="btn-text" aria-label="Clear the list of recipes you have already been shown" aria-describedby="clear-history-hint">
+            <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />
+            </svg>
+            <span id="clear-history-text">Clear seen history</span>
+          </button>
+          <p id="clear-history-hint" class="field-hint">Lets previously shown recipes come back.</p>
+        </div>
+      </main>
+
+      <div class="overlay" id="overlay"></div>
+      <div id="recipe-modal" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="sheet-scroll" id="modal-card">
+          <div class="sheet-media">
+            <img id="modal-image" alt="" class="sheet-img hidden" />
+          </div>
+          <div class="sheet-body">
+            <p id="modal-category" class="eyebrow"></p>
+            <h2 id="modal-title" class="sheet-title"></h2>
+            <div id="modal-meta" class="sheet-meta"></div>
+            <h3 class="sheet-heading">Ingredients <span id="modal-tick-count" class="sheet-count"></span></h3>
+            <ul id="modal-ingredients" class="ingredients"></ul>
+            <h3 class="sheet-heading">Steps</h3>
+            <ol id="modal-steps" class="steps"></ol>
+            <p id="modal-status" class="sheet-status" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+        <div class="sheet-bar">
+          <button id="modal-save-btn" type="button" class="bar-btn" aria-pressed="false">
+            <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
+            <span id="modal-save-text">Save</span>
+          </button>
+          <button id="modal-print-btn" type="button" class="bar-btn">
+            <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6" /><rect x="6" y="14" width="12" height="8" rx="1" /></svg>
+            <span>Print</span>
+          </button>
+          <button id="modal-close-btn" type="button" class="bar-btn">
+            <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+            <span>Close</span>
+          </button>
+        </div>
+      </div>
+
+      <footer class="site-footer">
+        <p>Built by Ryan · <a href="mailto:support@pantryroulette.com">support@pantryroulette.com</a> · <a href="https://github.com/Ryan-carrot/pantry-roulette" target="_blank" rel="noopener">GitHub</a></p>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

@@ -1,0 +1,4 @@
+.site-footer { text-align: center; padding: var(--space-7) 0 0; margin-top: var(--space-8); border-top: 1px solid var(--line); }
+.site-footer p { color: var(--text-3); font-size: var(--size-14); }
+.site-footer a { color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
+.site-footer a:hover { color: var(--text-1); }
