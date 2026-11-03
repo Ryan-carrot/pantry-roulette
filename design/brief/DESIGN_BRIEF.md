@@ -87,7 +87,7 @@ Your list:
 ## 4. Context of use
 
 Where and how is this actually used? Answer honestly from your own
-and Kiah's usage. This constrains layout more than any aesthetic
+and my wife's usage. This constrains layout more than any aesthetic
 preference.
 
 - Device, realistically: Mobile device / phone
@@ -96,7 +96,7 @@ preference.
 - How many seconds before you expect a result?: 5 to 10 seconds
 - Do you read the full recipe on the phone, or print it / move to a
   bigger screen?: read recipe on phone
-- Is anyone else in the household using it? How?: No, just me and Kiah currently. Although I do have a few friends that say they use it
+- Is anyone else in the household using it? How?: No, just me and my wife currently. Although I do have a few friends that say they use it
 
 ---
 

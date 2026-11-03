@@ -110,7 +110,7 @@ Run `npm run dev` and open it on your phone over Wi-Fi (`npm run dev -- --host`)
 
 ### Result =>
 
--
+- PASS: Font renders great on Android, text wraps perfectly, the dial still shows 3 vibes, and everything works and feels great even at 320px wide.
 
 ## The spin
 
@@ -122,7 +122,8 @@ Run `npm run dev` and open it on your phone over Wi-Fi (`npm run dev -- --host`)
 
 ### Result =>
 
--
+- PASS: the initial 1.7s spin feels just right and the other consecutive spins that spin a little faster feel right as well. Airplane mode connectivity test is a PASS, error messaging occurs as expected and explains the issue. On the 3g throttling, the paint is actually handled very well and is how I would expect a production app to work on a slow netowork.
+- ADDITIONAL NOTE: when the spin is done and the result renders, the page should automatically scroll or "snap" to the recipe card so that the entire recipe card is within viewport. That way the user has access to all of the controls immediately after a spin, and can see all the initial recipe details.
 
 ## The dial
 
@@ -132,7 +133,7 @@ Run `npm run dev` and open it on your phone over Wi-Fi (`npm run dev -- --host`)
 
 ### Result =>
 
--
+- PASS: works perfectly. No additional notes.
 
 ## The sheet
 
@@ -146,7 +147,7 @@ Run `npm run dev` and open it on your phone over Wi-Fi (`npm run dev -- --host`)
 
 ### Result =>
 
--
+- PASS. ADDITIONAL NOTE: It would be nice to add a feature that allows you to adjust serving size.
 
 ## Keyboard-only walk (no mouse)
 
@@ -160,7 +161,7 @@ Tab from page load, then Enter / Space where noted:
 
 ### Result =>
 
--
+- PASS: All keyboard controls operate as expected.
 
 ## Reduced motion
 
@@ -168,7 +169,7 @@ Turn on "Reduce motion" in the OS (Android: Settings → Accessibility → Remov
 
 ### Result =>
 
--
+- PASS
 
 ## Break it on purpose
 
@@ -177,7 +178,7 @@ Turn on "Reduce motion" in the OS (Android: Settings → Accessibility → Remov
 
 ### Result =>
 
--
+- PASS
 
 # Round 4 - Manual Tests (final sandbox pass)
 
@@ -192,7 +193,8 @@ Three changes only: scroll to the card, exclusion instead of penalty, and Surpri
 
 ### Result =>
 
--
+- PASS
+- NOTE: The very edge of the spin again button it butted up against the very bottom of the screen. The scroll should scroll just a few more pixels down for a tad bit of breathing room.
 
 ## Exclusion instead of penalty
 
@@ -203,7 +205,8 @@ Three changes only: scroll to the card, exclusion instead of penalty, and Surpri
 
 ### Result =>
 
--
+- PASS
+- NOTE: Remove the EM dash in the "You've seen everything for these ingredients — clear history to start over" message. Replace it with a period, so it reads: "You've seen everything for these ingredients. Clear history to start over."
 
 ## Surprise me
 
@@ -216,4 +219,4 @@ Three changes only: scroll to the card, exclusion instead of penalty, and Surpri
 
 ### Result =>
 
--
+- PASS
