@@ -4,6 +4,8 @@ Tell it what's in your fridge, pick a vibe, and let it spin up a meal you can ac
 
 **[pantryroulette.com](https://pantryroulette.com)**
 
+A product of [Hexry Development](https://hexry.dev).
+
 ## What it does
 
 Type the ingredients you have, separated by commas, set the vibe dial (Lazy, Simple, Comfort, Hearty, Healthy, Fun, Classic, Fancy, Elegant, Impressive) and hit Spin. The reel runs through real recipes from [TheMealDB](https://www.themealdb.com) that use your ingredients and lands on the one that best fits both your pantry and your mood. Open it and you get everything you need to cook from your phone: ingredients you can tick off as they go in the pan, numbered steps in large type, a rough cook-time estimate, and Save, Print and Close within reach of your thumb. It won't show you the same recipe twice until you clear your history, and "Surprise me" skips the typing altogether. Saved recipes and your recent picks stay on your device; there is no account.
@@ -72,4 +74,4 @@ Source is public for reference and portfolio purposes. All rights reserved; see 
 
 ## Contact
 
-Built by Ryan Christian. Questions and feedback: [support@pantryroulette.com](mailto:support@pantryroulette.com).
+Built by Ryan Christian @ [Hexry Development](https://hexry.dev). Questions and feedback: [support@pantryroulette.com](mailto:support@pantryroulette.com).
