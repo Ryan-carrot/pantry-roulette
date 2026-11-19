@@ -149,3 +149,7 @@ Every design decision behind 2.0, one per line, with the reasoning, grouped by m
 - **The design brief stays public** as `design/brief/DESIGN_BRIEF.md`; it is the first artifact of the process the README describes.
 - **Social and search tags restored** (`og:*`, `twitter:*`, canonical, sitemap, `CNAME`) now that this is the public site. The `og:image` URL points at a PNG Ryan adds himself.
 - **Agents work on feature branches and never push** (`CLAUDE.md`). Ryan reviews and pushes.
+
+## Hermetic tests
+
+- **happy-dom never loads files, set once in the Vitest config.** `tests/footer.test.ts` parses the shipped `index.html`, and happy-dom fetched its Google Fonts stylesheet even through `DOMParser`; the request was aborted at teardown and printed errors after the summary. `environmentOptions.happyDOM.settings` turns off CSS, JavaScript and iframe loading for every test, so no future test can reach the network this way, and `handleDisabledFileLoadingAsSuccess` keeps a skipped load from firing an `error` event. `CLAUDE.md` states the rule: tests are hermetic.
